@@ -42,12 +42,6 @@ class CaseInstance(visibility.WithheldModel, frozen=True):
     pipeline_version: str
     samples: tuple[MemberSample, ...]  # every member of the case's family, once
 
-    def sample(self, member_id: ids.MemberId) -> ids.SampleId:
-        for s in self.samples:
-            if s.member == member_id:
-                return s.sample
-        raise KeyError(f'{member_id!r} is not a member of case instance {self.id!r}')
-
     @pydantic.model_validator(mode='after')
     def _check(self) -> Self:
         for field in ('member', 'sample'):

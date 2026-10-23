@@ -91,12 +91,3 @@ def test_inputs_carry_nothing_withheld(withheld: release.WithheldRelease) -> Non
         forbidden.add(case.answer.cutoff.isoformat())
     for run in item.items(withheld):
         assert not forbidden & set(strings(run.input.model_dump(mode='json')))
-
-
-def test_items_follow_the_release_order(withheld: release.WithheldRelease) -> None:
-    runs = item.items(withheld)
-    assert [r.id for r in runs] == [i.id for i in withheld.instances]
-    for run, instance in zip(runs, withheld.instances, strict=True):
-        case = withheld.case(instance.case)
-        assert run.input == case.family
-        assert run.cutoff == case.answer.cutoff

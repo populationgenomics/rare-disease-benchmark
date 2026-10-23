@@ -83,6 +83,11 @@ class Individual(visibility.OpenModel, frozen=True):
 
 
 class Family(visibility.OpenModel, frozen=True):
+    """The family of one case: its pedigree, with each member's clinical presentation.
+
+    A system under test receives it exactly as recorded.
+    """
+
     proband: ids.MemberId
     members: tuple[Individual, ...]
 
@@ -147,6 +152,8 @@ class Inheritance(enum.StrEnum):
 
 
 class Diagnosis(visibility.WithheldModel, frozen=True):
+    """One diagnosis the laboratory reached. A case with a blended phenotype has several."""
+
     disease: str  # a label, compared by the grader
     ontology_id: str | None = None  # a MONDO or OMIM id where one fits. None: no fitting term
     inheritance: Inheritance
@@ -162,7 +169,7 @@ class Diagnosis(visibility.WithheldModel, frozen=True):
 
 
 class CaseAnswer(visibility.WithheldModel, frozen=True):
-    """What the grader compares a submission against.
+    """What the grader compares a submission against, and the cutoff the harness applies.
 
     Variants placed in the proband that are not part of any diagnosis are the candidates the laboratory considered and
     set aside.
@@ -188,7 +195,7 @@ class CaseAnswer(visibility.WithheldModel, frozen=True):
         return self
 
 
-# ---- the record ----
+# ---- withheld: the record ----
 
 
 class Source(visibility.WithheldModel, frozen=True):
@@ -218,9 +225,7 @@ class Case(visibility.WithheldModel, frozen=True):
         for placement in self.answer.placements:
             _check_placement(family, placement)
         for causative in self.answer.causative_variants:
-            if not any(
-                p.variant == causative and p.haplotype.individual == family.proband for p in self.answer.placements
-            ):
+            if not any(p.variant == causative and p.haplotype.member == family.proband for p in self.answer.placements):
                 raise ValueError(f'causative variant {_describe(causative)} is not placed in the proband')
         return self
 
@@ -234,7 +239,7 @@ def _check_placement(family: Family, placement: variant.Placement) -> None:
     _check_haplotype(family, placement.haplotype, v)
     if v.origin is not None:
         _check_haplotype(family, v.origin, v)
-    member = family.member(placement.haplotype.individual)
+    member = family.member(placement.haplotype.member)
     copies = 1 if _single_copy(member, v.region) else 2
     if copies == 2 and placement.vaf is not None and placement.vaf > 0.5:
         raise ValueError(
@@ -256,8 +261,8 @@ def _single_copy(member: Individual, region: variant.Region) -> bool:
 def _check_haplotype(family: Family, haplotype: variant.Haplotype, v: variant.Variant) -> None:
     """Reject a haplotype name that does not exist for this member at this site."""
     name = haplotype.name
-    where = f'{haplotype.individual!r} {name} at {_describe(v)}'
-    member = family.require_member(haplotype.individual, where)
+    where = f'{haplotype.member!r} {name} at {_describe(v)}'
+    member = family.require_member(haplotype.member, where)
     proband = family.proband_individual
 
     if name in variant.CHILD_HAPLOTYPES:

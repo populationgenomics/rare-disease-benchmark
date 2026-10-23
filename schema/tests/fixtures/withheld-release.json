@@ -31,12 +31,12 @@
       },
       "answer": {
         "placements": [
-          {"haplotype": {"individual": "proband", "name": "paternal"}, "variant": {"chrom": "chr1", "pos": 197090000, "ref": "C", "alt": "T"}},
-          {"haplotype": {"individual": "father", "name": "transmitted"}, "variant": {"chrom": "chr1", "pos": 197090000, "ref": "C", "alt": "T"}},
-          {"haplotype": {"individual": "proband", "name": "maternal"}, "variant": {"chrom": "chr1", "pos": 197120000, "ref": "G", "alt": "A"}},
-          {"haplotype": {"individual": "mother", "name": "transmitted"}, "variant": {"chrom": "chr1", "pos": 197120000, "ref": "G", "alt": "A"}},
-          {"haplotype": {"individual": "proband", "name": "paternal"}, "variant": {"chrom": "chr2", "pos": 166010000, "ref": "T", "alt": "C"}},
-          {"haplotype": {"individual": "father", "name": "transmitted"}, "variant": {"chrom": "chr2", "pos": 166010000, "ref": "T", "alt": "C"}}
+          {"haplotype": {"member": "proband", "name": "paternal"}, "variant": {"chrom": "chr1", "pos": 197090000, "ref": "C", "alt": "T"}},
+          {"haplotype": {"member": "father", "name": "transmitted"}, "variant": {"chrom": "chr1", "pos": 197090000, "ref": "C", "alt": "T"}},
+          {"haplotype": {"member": "proband", "name": "maternal"}, "variant": {"chrom": "chr1", "pos": 197120000, "ref": "G", "alt": "A"}},
+          {"haplotype": {"member": "mother", "name": "transmitted"}, "variant": {"chrom": "chr1", "pos": 197120000, "ref": "G", "alt": "A"}},
+          {"haplotype": {"member": "proband", "name": "paternal"}, "variant": {"chrom": "chr2", "pos": 166010000, "ref": "T", "alt": "C"}},
+          {"haplotype": {"member": "father", "name": "transmitted"}, "variant": {"chrom": "chr2", "pos": 166010000, "ref": "T", "alt": "C"}}
         ],
         "diagnoses": [
           {

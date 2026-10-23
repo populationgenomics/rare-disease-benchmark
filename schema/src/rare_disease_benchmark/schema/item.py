@@ -26,7 +26,8 @@ class Item(visibility.WithheldModel, frozen=True):
 
 def items(withheld: release.WithheldRelease) -> tuple[Item, ...]:
     """Every case instance of a release as a harness runs it, in the release's order."""
-    return tuple(
-        Item(id=i.id, cutoff=withheld.case(i.case).answer.cutoff, input=withheld.case(i.case).family)
-        for i in withheld.instances
-    )
+    runs = []
+    for instance in withheld.instances:
+        case = withheld.case(instance.case)
+        runs.append(Item(id=instance.id, cutoff=case.answer.cutoff, input=case.family))
+    return tuple(runs)

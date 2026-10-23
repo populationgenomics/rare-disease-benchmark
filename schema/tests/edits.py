@@ -16,11 +16,11 @@ def changed(data: dict[str, Any], change: Change) -> dict[str, Any]:
     return result
 
 
-def placement(individual: str, name: str, chrom: str, pos: int, **extra: object) -> dict[str, Any]:
+def placement(member: str, name: str, chrom: str, pos: int, **extra: object) -> dict[str, Any]:
     variant: dict[str, Any] = {'chrom': chrom, 'pos': pos, 'ref': 'A', 'alt': 'G'}
     vaf = extra.pop('vaf', None)
     variant.update(extra)
-    row: dict[str, Any] = {'haplotype': {'individual': individual, 'name': name}, 'variant': variant}
+    row: dict[str, Any] = {'haplotype': {'member': member, 'name': name}, 'variant': variant}
     if vaf is not None:
         row['vaf'] = vaf
     return row

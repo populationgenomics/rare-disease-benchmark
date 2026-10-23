@@ -29,7 +29,7 @@ PARENT_HAPLOTYPES: frozenset[HaplotypeName] = frozenset({'transmitted', 'non_tra
 
 CHROMOSOMES = frozenset({*(f'chr{i}' for i in range(1, 23)), 'chrX', 'chrY', 'chrM'})
 
-# GRCh38 pseudoautosomal regions, 1-based inclusive. The pinned reference masks the chrY copies, so nothing may be
+# GRCh38 pseudoautosomal regions, 1-based inclusive. GRCh38 analysis sets hard-mask the chrY copies, so nothing may be
 # placed there.
 _PAR = {
     'chrX': ((10_001, 2_781_479), (155_701_383, 156_030_895)),
@@ -52,9 +52,9 @@ class Region(enum.StrEnum):
 
 
 class Haplotype(visibility.WithheldModel, frozen=True):
-    """One of a member's chromosome copies, named the way every phased trio names them."""
+    """One of a member's chromosome copies, named by its relation to the proband."""
 
-    individual: ids.MemberId
+    member: ids.MemberId
     name: HaplotypeName
 
 
@@ -111,7 +111,7 @@ class Variant(visibility.WithheldModel, frozen=True):
         if self.chrom in _PAR and self._touches_par() and not self._in_par():
             raise ValueError(f'{self.chrom}:{self.pos}-{self.last} straddles a pseudoautosomal boundary')
         if self.chrom == 'chrY' and self._in_par():
-            raise ValueError(f'chrY:{self.pos} is in a pseudoautosomal region, which the reference masks on chrY')
+            raise ValueError(f'chrY:{self.pos} is in a pseudoautosomal region, which GRCh38 analysis sets mask on chrY')
         return self
 
     def _check_symbolic(self) -> None:

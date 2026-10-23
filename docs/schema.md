@@ -51,7 +51,7 @@ classDiagram
         vaf: float?
     }
     class Haplotype {
-        individual: MemberId
+        member: MemberId
         name: HaplotypeName
     }
     class HaplotypeName {
@@ -158,70 +158,6 @@ classDiagram
     style ClinicalPresentation fill:#d6e6fb,stroke:#4a86d4
 ```
 
-## Ids and what they name
-
-Four kinds of id appear in the schema. Only one of them, the member id, is open.
-
-| Id               | Example   | Names                                                            | Side     |
-| ---------------- | --------- | ---------------------------------------------------------------- | -------- |
-| `CaseId`         | `case-17` | one case record                                                  | withheld |
-| `MemberId`       | `proband` | one member of a case's family, and that member's sample in files | open     |
-| `SampleId`       | `NA19240` | a real sequenced sample, as its source names it                  | withheld |
-| `CaseInstanceId` | `r1-07`   | one case built into the data of real samples, in one release     | withheld |
-
-A member id is a relational label such as `proband`, `father` or `sister_2`, and the record rejects anything else. A
-case holds no sequencing data, so within the record the label only lets one part refer to a person: the pedigree's
-parent links, and the placements that say whose chromosome copy to edit. In a release the same label is the sample's
-name in that instance's files and PED file. That is safe because a label says nothing beyond what the pedigree already
-shows, and the record also rejects a member id that contains the case id or the source accession.
-
-A sample id names real sequencing data, such as a 1000 Genomes sample. The build reads that sample's prepared data and
-writes the edited files under the member id, so no released file carries the sample id. It stays withheld because a
-system under test that knew it could subtract the sample's published genome from the files.
-
-Every trio case calls its proband `proband`, so sample names repeat across the instances of a release. A tool that needs
-names unique across a whole release, such as a database that holds every instance at once, can prefix each with the
-instance id, as in `r1-07_proband`.
-
-## From case to release
-
-A build takes one case and a map from each of its members to a real sample. From the case it reads the placements, which
-say which chromosome copy of which member carries which variant. For each sample it reads the prepared data that the
-pipeline version pins: the reads, the calls from calling the sample's family jointly, and the phasing that says which
-reads came from which parent. It edits the reads at each placement, reprocesses them, and names each sample by its
-member id. The result is the instance's synthetic genomes, one per member of the case's family, and a build record that
-holds what reproduces the build.
-
-```mermaid
-flowchart LR
-    subgraph IN["Withheld inputs"]
-        direction TB
-        CASE["Case<br/>family · answer · bookkeeping"]
-        INST["CaseInstance<br/>member → sample · pipeline version"]
-        DATA["prepared data of each sample<br/>reads, joint calls, phasing"]
-    end
-
-    BUILD{{"build<br/>edit reads at each placement,<br/>reprocess, name samples by member id"}}
-
-    FILES["synthetic genomes (open)<br/>CRAM and gVCF per member, joint calls, PED"]
-
-    CASE -- "placements" --> BUILD
-    INST -- "which sample each member is" --> BUILD
-    DATA -- "reads, calls, phasing" --> BUILD
-    BUILD --> FILES
-
-    classDef default fill:#ffffff,stroke:#888888
-    style IN fill:#fcd9d9,stroke:#d9534f
-    style FILES fill:#d6e6fb,stroke:#4a86d4
-```
-
-The haplotype names only mean something if the samples are related the way the case's family says: "the copy the father
-transmitted" has to be a copy the proband's sample actually carries. The build checks that, and that each sample's sex
-matches its member's, against its own data, such as the public pedigree of 1000 Genomes. It also rejects a family
-structure the pipeline version cannot build yet. The release itself checks only what needs no outside data: every member
-of the case maps to exactly one sample, no sample serves two members, and a case is not built into the same samples
-twice. The build record is withheld and not yet part of the schema.
-
 ## The case record
 
 A case holds everything a laboratory knew and concluded about one family, and nothing about any real sample it might be
@@ -300,6 +236,70 @@ a whole release could pair them and intersect their novel variants, which leaves
 instance has to be analysed in a session of its own. And because a case with more instances would otherwise weigh more,
 a result over such a release is best averaged per case first, with the spread across a case's instances reported beside
 it.
+
+## Ids and what they name
+
+Four kinds of id appear in the schema. Only one of them, the member id, is open.
+
+| Id               | Example   | Names                                                            | Side     |
+| ---------------- | --------- | ---------------------------------------------------------------- | -------- |
+| `CaseId`         | `case-17` | one case record                                                  | withheld |
+| `MemberId`       | `proband` | one member of a case's family, and that member's sample in files | open     |
+| `SampleId`       | `NA19240` | a real sequenced sample, as its source names it                  | withheld |
+| `CaseInstanceId` | `r1-07`   | one case built into the data of real samples, in one release     | withheld |
+
+A member id is a relational label such as `proband`, `father` or `sister_2`, and the record rejects anything else. A
+case holds no sequencing data, so within the record the label only lets one part refer to a person: the pedigree's
+parent links, and the placements that say whose chromosome copy to edit. In a release the same label is the sample's
+name in that instance's files and PED file. That is safe because a label says nothing beyond what the pedigree already
+shows, and the record also rejects a member id that contains the case id or the source accession.
+
+A sample id names real sequencing data, such as a 1000 Genomes sample. The build reads that sample's prepared data and
+writes the edited files under the member id, so no released file carries the sample id. It stays withheld because a
+system under test that knew it could subtract the sample's published genome from the files.
+
+Every case calls its proband `proband`, so sample names repeat across the instances of a release. A tool that needs
+names unique across a whole release, such as a database that holds every instance at once, can prefix each with the
+instance id, as in `r1-07_proband`.
+
+## Building a case instance
+
+A build takes one case and a map from each of its members to a real sample. From the case it reads the placements, which
+say which chromosome copy of which member carries which variant. For each sample it reads the prepared data that the
+pipeline version pins: the reads, the calls made jointly with the sample's family, and the phasing that says which reads
+came from which parent. It edits the reads at each placement, reprocesses them, and names each sample by its member id.
+The result is the instance's synthetic genomes, one per member of the case's family, and a build record that holds what
+reproduces the build.
+
+```mermaid
+flowchart LR
+    subgraph IN["Withheld inputs"]
+        direction TB
+        CASE["Case<br/>family · answer · bookkeeping"]
+        INST["CaseInstance<br/>member → sample · pipeline version"]
+        DATA["prepared data of each sample<br/>reads, joint calls, phasing"]
+    end
+
+    BUILD{{"build<br/>edit reads at each placement,<br/>reprocess, name samples by member id"}}
+
+    FILES["synthetic genomes (open)<br/>CRAM and gVCF per member, joint calls, PED"]
+
+    CASE -- "placements" --> BUILD
+    INST -- "which sample each member is" --> BUILD
+    DATA -- "reads, calls, phasing" --> BUILD
+    BUILD --> FILES
+
+    classDef default fill:#ffffff,stroke:#888888
+    style IN fill:#fcd9d9,stroke:#d9534f
+    style FILES fill:#d6e6fb,stroke:#4a86d4
+```
+
+The haplotype names only mean something if the samples are related the way the case's family says: "the copy the father
+transmitted" has to be a copy the proband's sample actually carries. The build checks that, and that each sample's sex
+matches its member's, against its own data, such as the public pedigree of 1000 Genomes. It also rejects a family
+structure the pipeline version cannot build yet. The release itself checks only what needs no outside data: every member
+of the case maps to exactly one sample, no sample serves two members, and a case is not built into the same samples
+twice. The build record is withheld and not yet part of the schema.
 
 ## Running a release
 

@@ -18,15 +18,22 @@ def as_singleton(data: dict[str, Any]) -> None:
     case = data['cases'][0]
     case['family']['members'] = case['family']['members'][:1]
     case['family']['members'][0].update(father=None, mother=None)
-    case['answer']['placements'] = [
-        p for p in case['answer']['placements'] if p['haplotype']['individual'] == 'proband'
-    ]
+    case['answer']['placements'] = [p for p in case['answer']['placements'] if p['haplotype']['member'] == 'proband']
     for i in data['instances']:
         i['samples'] = i['samples'][:1]
 
 
 def test_a_case_may_have_several_instances_in_one_release(withheld: release.WithheldRelease) -> None:
     assert len({i.case for i in withheld.instances}) < len(withheld.instances)
+
+
+def test_items_follow_the_release_order(withheld: release.WithheldRelease) -> None:
+    runs = item.items(withheld)
+    assert [r.id for r in runs] == [i.id for i in withheld.instances]
+    for run, instance in zip(runs, withheld.instances, strict=True):
+        case = withheld.case(instance.case)
+        assert run.input == case.family
+        assert run.cutoff == case.answer.cutoff
 
 
 def test_a_case_without_parents_maps_only_the_proband(release_data: dict[str, Any]) -> None:

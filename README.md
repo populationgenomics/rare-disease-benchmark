@@ -10,7 +10,7 @@ group.
 
 A **case** is what a curator records for one solved case: the family, the clinical presentation of each member, the
 placements (each putting one variant on one chromosome copy of one family member) and the diagnosis. A case names no
-background genome, so it can be built into any background whose family structure fits.
+real sample, so it can be built into the data of any family related the same way.
 
 A **background** is a real sequenced family, such as a 1000 Genomes trio, whose data cases are built into.
 
@@ -22,7 +22,7 @@ background.
 A **release** is a versioned set of case instances that never changes after it is issued. Everything in it is on the
 open side, which the system under test sees, or on the withheld side, which only the harness and the grader read. The
 schema makes the split structural: every model is declared open or withheld, and the only open data a case holds is its
-family: the pedigree and each member's clinical presentation.
+family, meaning the pedigree and each member's clinical presentation.
 
 ## Layout
 

@@ -42,7 +42,7 @@ ACCEPTED: dict[str, Change] = {
             placement('proband', 'paternal', 'chr3', 1_000),
         ]
     ),
-    'daughter inherits her father X': lambda c: placements(c).extend(
+    "daughter inherits her father's X": lambda c: placements(c).extend(
         [
             placement('proband', 'paternal', 'chrX', X_SITE),
             placement('father', 'transmitted', 'chrX', X_SITE),
@@ -72,7 +72,7 @@ ACCEPTED: dict[str, Change] = {
             ref='A',
             alt='<UPD>',
             end=28_000_000,
-            origin={'individual': 'proband', 'name': 'paternal'},
+            origin={'member': 'proband', 'name': 'paternal'},
         )
     ),
 }
@@ -88,7 +88,7 @@ REJECTED: dict[str, tuple[Change, str]] = {
         lambda c: placements(c).append(placement('sibling', 'paternal', 'chr3', 1_000)),
         'not a member',
     ),
-    'paternal copy of a son X': (
+    "paternal copy of a son's X": (
         lambda c: (as_son(c), placements(c).append(placement('proband', 'paternal', 'chrX', X_SITE))),
         'does not exist',
     ),
@@ -138,7 +138,7 @@ REJECTED: dict[str, tuple[Change, str]] = {
     ),
     'origin without <UPD>': (
         lambda c: placements(c).append(
-            placement('proband', 'paternal', 'chr3', 1_000, origin={'individual': 'proband', 'name': 'maternal'})
+            placement('proband', 'paternal', 'chr3', 1_000, origin={'member': 'proband', 'name': 'maternal'})
         ),
         'origin',
     ),
