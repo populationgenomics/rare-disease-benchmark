@@ -63,6 +63,9 @@ ACCEPTED: dict[str, Change] = {
             placement('mother', 'transmitted', 'chrM', M_SITE, vaf=0.8),
         ]
     ),
+    'ids of one disease in two ontologies': lambda c: c['answer']['diagnoses'][0].update(
+        ontology_ids=['MONDO:0000001', 'OMIM:100000']
+    ),
     'paternal isodisomy over a region': lambda c: placements(c).append(
         placement(
             'proband',
@@ -160,6 +163,14 @@ REJECTED: dict[str, tuple[Change, str]] = {
     'malformed HPO id': (
         lambda c: members(c)[0]['presentation'].update(hpo_present=['microcephaly']),
         'HPO id',
+    ),
+    'malformed disease id': (
+        lambda c: c['answer']['diagnoses'][0].update(ontology_ids=['microcephaly']),
+        'not a MONDO, OMIM or Orphanet id',
+    ),
+    'two ids from one ontology': (
+        lambda c: c['answer']['diagnoses'][0].update(ontology_ids=['OMIM:100000', 'OMIM:100001']),
+        'more than one id from one ontology',
     ),
     'no cutoff recorded': (lambda c: c['answer'].pop('cutoff'), 'Field required'),
     'an unknown field': (lambda c: c['answer'].update(gene='ASPM'), 'Extra inputs'),

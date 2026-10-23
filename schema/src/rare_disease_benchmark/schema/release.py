@@ -5,6 +5,11 @@ genome for each family member, together with the pedigree and clinical presentat
 submission, under its id. A release may hold several instances of the same case, each built into different samples,
 which is how results are checked for robustness to the background.
 
+A case instance is also the item a harness runs. The harness keys the submission and the trace by the instance id, and
+follows the instance to its case for the cutoff it applies and for the family it passes to the system under test with
+the sequencing files. The harness and the grader read the withheld side; the system under test sees only the family and
+the files. This assumes that every party running a harness also holds the release's withheld side.
+
 Which samples a case can be built into (their relationships and sexes against the case's family, and the family
 structures a pipeline version handles) is checked by the build against its own data, not here.
 """

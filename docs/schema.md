@@ -71,7 +71,7 @@ classDiagram
     }
     class Diagnosis {
         disease: str
-        ontology_id: str?
+        ontology_ids: str[*]
         inheritance: Inheritance
         variants: Variant[1..*]
     }
@@ -92,11 +92,6 @@ classDiagram
     class MemberSample {
         member: MemberId
         sample: SampleId
-    }
-    class Item {
-        id: CaseInstanceId
-        cutoff: date?
-        input: Family
     }
 
     namespace Open {
@@ -138,24 +133,22 @@ classDiagram
     CaseInstance *-- MemberSample : samples
     Family *-- Individual : members
     Individual *-- ClinicalPresentation : presentation
-    Item *-- Family : input, the case's family
 
-    style WithheldRelease fill:#fcd9d9,stroke:#d9534f
-    style Case fill:#fcd9d9,stroke:#d9534f
-    style Source fill:#fcd9d9,stroke:#d9534f
-    style CaseAnswer fill:#fcd9d9,stroke:#d9534f
-    style Placement fill:#fcd9d9,stroke:#d9534f
-    style Haplotype fill:#fcd9d9,stroke:#d9534f
-    style HaplotypeName fill:#fcd9d9,stroke:#d9534f
-    style Variant fill:#fcd9d9,stroke:#d9534f
-    style Diagnosis fill:#fcd9d9,stroke:#d9534f
-    style Inheritance fill:#fcd9d9,stroke:#d9534f
-    style MemberSample fill:#fcd9d9,stroke:#d9534f
-    style CaseInstance fill:#fcd9d9,stroke:#d9534f
-    style Item fill:#fcd9d9,stroke:#d9534f
-    style Family fill:#d6e6fb,stroke:#4a86d4
-    style Individual fill:#d6e6fb,stroke:#4a86d4
-    style ClinicalPresentation fill:#d6e6fb,stroke:#4a86d4
+    style WithheldRelease fill:#d9534f33,stroke:#d9534f
+    style Case fill:#d9534f33,stroke:#d9534f
+    style Source fill:#d9534f33,stroke:#d9534f
+    style CaseAnswer fill:#d9534f33,stroke:#d9534f
+    style Placement fill:#d9534f33,stroke:#d9534f
+    style Haplotype fill:#d9534f33,stroke:#d9534f
+    style HaplotypeName fill:#d9534f33,stroke:#d9534f
+    style Variant fill:#d9534f33,stroke:#d9534f
+    style Diagnosis fill:#d9534f33,stroke:#d9534f
+    style Inheritance fill:#d9534f33,stroke:#d9534f
+    style MemberSample fill:#d9534f33,stroke:#d9534f
+    style CaseInstance fill:#d9534f33,stroke:#d9534f
+    style Family fill:#4a86d433,stroke:#4a86d4
+    style Individual fill:#4a86d433,stroke:#4a86d4
+    style ClinicalPresentation fill:#4a86d433,stroke:#4a86d4
 ```
 
 ## The case record
@@ -178,10 +171,10 @@ literature so that the answer cannot be looked up.
 
 ## Case instances
 
-A case instance is one case built into the data of real samples, as issued in one release. It is the unit a system under
-test analyses, and the harness runs it under its id. It holds no case data of its own: it names the case, the pipeline
-version, and the sample each member was built into. A release may contain several instances of one case built into
-different samples, which is how a result is checked for robustness to the background.
+A case instance is one case built into the data of real samples, as issued in one release. It is the item a harness
+runs: the unit a system under test analyses, under the instance's id. It holds no case data of its own: it names the
+case, the pipeline version, and the sample each member was built into. A release may contain several instances of one
+case built into different samples, which is how a result is checked for robustness to the background.
 
 The example below is the invented case 17 from the test fixture: an affected girl and her unaffected parents, built into
 two 1000 Genomes trios in release 1.0.0, each with a daughter. The family in the middle is what the system under test
@@ -214,10 +207,10 @@ flowchart LR
     a2 --- f --- b2
     a3 --- m --- b3
 
-    classDef default fill:#ffffff,stroke:#888888
-    style FAM fill:#d6e6fb,stroke:#4a86d4
-    style I1 fill:#fcd9d9,stroke:#d9534f
-    style I2 fill:#fcd9d9,stroke:#d9534f
+    classDef default fill:#8888881a,stroke:#888888
+    style FAM fill:#4a86d433,stroke:#4a86d4
+    style I1 fill:#d9534f33,stroke:#d9534f
+    style I2 fill:#d9534f33,stroke:#d9534f
 ```
 
 Both instances carry the same PED file, and the files of each name their samples the same way:
@@ -289,9 +282,9 @@ flowchart LR
     DATA -- "reads, calls, phasing" --> BUILD
     BUILD --> FILES
 
-    classDef default fill:#ffffff,stroke:#888888
-    style IN fill:#fcd9d9,stroke:#d9534f
-    style FILES fill:#d6e6fb,stroke:#4a86d4
+    classDef default fill:#8888881a,stroke:#888888
+    style IN fill:#d9534f33,stroke:#d9534f
+    style FILES fill:#4a86d433,stroke:#4a86d4
 ```
 
 The haplotype names only mean something if the samples are related the way the case's family says: "the copy the father
@@ -303,18 +296,17 @@ twice. The build record is withheld and not yet part of the schema.
 
 ## Running a release
 
-For each case instance, `item.items` gives the harness an `Item`: the instance id, by which it keys the submission and
-the trace; the cutoff, to which it rolls resources back; and the input, which is the case's family. The harness passes
-the input and the sequencing files to the system under test, and nothing else. The grader reads the answer directly from
-the withheld side.
+A harness runs a release one case instance at a time. It keys the submission and the trace by the instance id, and
+follows the instance to its case for two things: the cutoff, to which it rolls clinical-assertion databases and
+literature back, and the family, which it passes to the system under test together with the sequencing files. Nothing
+else reaches the system. The grader reads the answer directly from the withheld side.
 
 ```mermaid
 flowchart LR
     subgraph W["Withheld: read by the harness and the grader"]
         direction TB
+        INST["CaseInstance<br/>id · case · pipeline version · member → sample"]
         CASE["Case<br/>family · answer · bookkeeping"]
-        INST["CaseInstance<br/>case · pipeline version · member → sample"]
-        ITEM["Item<br/>id · cutoff · input"]
     end
 
     subgraph O["Open: seen by the system under test"]
@@ -330,21 +322,21 @@ flowchart LR
         GRADER["grader"]
     end
 
-    CASE -- "family" --> FAM
     INST -. "case" .- CASE
-    ITEM -. "input" .- FAM
-    ITEM -- "id, cutoff" --> HARNESS
+    INST -- "id" --> HARNESS
+    CASE -- "answer.cutoff" --> HARNESS
+    CASE -- "family" --> FAM
     FAM --> SUT
     FILES --> SUT
     HARNESS -- "resources rolled back to the cutoff" --> SUT
     SUT -- "submission" --> HARNESS
-    HARNESS -- "submission, keyed by id" --> GRADER
+    HARNESS -- "submission, keyed by instance id" --> GRADER
     CASE -- "answer" --> GRADER
 
-    classDef default fill:#ffffff,stroke:#888888
-    style W fill:#fcd9d9,stroke:#d9534f
-    style O fill:#d6e6fb,stroke:#4a86d4
-    style G fill:#eeeeee,stroke:#999999
+    classDef default fill:#8888881a,stroke:#888888
+    style W fill:#d9534f33,stroke:#d9534f
+    style O fill:#4a86d433,stroke:#4a86d4
+    style G fill:#9999991f,stroke:#999999
 ```
 
 The cutoff stays hidden from the system under test because it is the date a causative variant became public, and a model
@@ -357,5 +349,5 @@ cutoffs published separately. That would add a third tier between the two sides 
 
 Three tests keep the boundary in place. Two walk every type reachable from `Family`, the only open data: one fails if
 any of them is a `WithheldModel`, the other if a field is typed with a withheld id (`CaseId`, `SampleId` or
-`CaseInstanceId`). A withheld type or id placed in the family therefore fails CI. The third serialises each item's input
-and fails if the case id, a sample id, an instance id, the cutoff or a placed position appears among its values.
+`CaseInstanceId`). A withheld type or id placed in the family therefore fails CI. The third serialises the fixture's
+family and fails if the case id, a sample id, an instance id, the cutoff or a placed position appears among its values.

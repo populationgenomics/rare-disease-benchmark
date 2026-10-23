@@ -27,6 +27,7 @@ type Provenance = Literal['real', 'derived', 'invented']
 type Sharing = Literal['internal', 'partners', 'public']
 
 _HPO_ID = re.compile(r'HP:\d{7}')
+_DISEASE_ID = re.compile(r'(MONDO|OMIM|ORPHA):\d+')
 
 # Relational labels such as proband, father, half_sister or sister_2. Member ids become the sample names in released
 # files, so the form keeps out accessions and other identifiers a source may use.
@@ -155,11 +156,24 @@ class Diagnosis(visibility.WithheldModel, frozen=True):
     """One diagnosis the laboratory reached. A case with a blended phenotype has several."""
 
     disease: str  # a label, compared by the grader
-    ontology_id: str | None = None  # a MONDO or OMIM id where one fits. None: no fitting term
+    ontology_ids: tuple[str, ...] = ()
+    # The disease's ids in MONDO, OMIM or Orphanet, at most one per ontology, all naming the same disease rather than a
+    # broader or narrower one. Empty: no fitting term.
     inheritance: Inheritance
     variants: tuple[variant.Variant, ...] = pydantic.Field(min_length=1)
     # The causative variants. A compound heterozygote lists both; a homozygous variant is listed once, and its two
     # placements show both copies.
+
+    @pydantic.field_validator('ontology_ids')
+    @classmethod
+    def _one_id_per_ontology(cls, ontology_ids: tuple[str, ...]) -> tuple[str, ...]:
+        for ontology_id in ontology_ids:
+            if not _DISEASE_ID.fullmatch(ontology_id):
+                raise ValueError(f'{ontology_id!r} is not a MONDO, OMIM or Orphanet id such as MONDO:0000001')
+        prefixes = [i.split(':')[0] for i in ontology_ids]
+        if len(set(prefixes)) != len(prefixes):
+            raise ValueError(f'more than one id from one ontology: {ontology_ids}')
+        return ontology_ids
 
     @pydantic.model_validator(mode='after')
     def _check(self) -> Self:

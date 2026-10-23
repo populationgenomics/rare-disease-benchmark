@@ -6,7 +6,7 @@ import pydantic
 import pytest
 from edits import Change, changed
 
-from rare_disease_benchmark.schema import item, release
+from rare_disease_benchmark.schema import release
 
 
 def instance(data: dict[str, Any], index: int) -> dict[str, Any]:
@@ -27,19 +27,9 @@ def test_a_case_may_have_several_instances_in_one_release(withheld: release.With
     assert len({i.case for i in withheld.instances}) < len(withheld.instances)
 
 
-def test_items_follow_the_release_order(withheld: release.WithheldRelease) -> None:
-    runs = item.items(withheld)
-    assert [r.id for r in runs] == [i.id for i in withheld.instances]
-    for run, instance in zip(runs, withheld.instances, strict=True):
-        case = withheld.case(instance.case)
-        assert run.input == case.family
-        assert run.cutoff == case.answer.cutoff
-
-
 def test_a_case_without_parents_maps_only_the_proband(release_data: dict[str, Any]) -> None:
     withheld = release.WithheldRelease.model_validate(changed(release_data, as_singleton))
-    for run in item.items(withheld):
-        assert len(run.input.members) == 1
+    assert all(len(s.samples) == 1 for s in withheld.instances)
 
 
 REJECTED: dict[str, tuple[Change, str]] = {

@@ -6,9 +6,9 @@ from collections.abc import Iterator
 
 import pydantic
 
-from rare_disease_benchmark.schema import ids, item, record, release, variant, visibility
+from rare_disease_benchmark.schema import ids, record, release, variant, visibility
 
-_MODULES = (ids, item, record, release, variant, visibility)
+_MODULES = (ids, record, release, variant, visibility)
 
 
 # Id types that name something withheld.
@@ -75,10 +75,10 @@ def test_the_reachability_walk_finds_withheld_types() -> None:
     # Guards the two tests above against passing vacuously.
     assert record.CaseAnswer in reachable_models(record.Case)
     assert variant.Haplotype in reachable_models(record.Case)
-    assert set(_WITHHELD_IDS) <= reachable_types(item.Item) | reachable_types(release.WithheldRelease)
+    assert set(_WITHHELD_IDS) <= reachable_types(release.WithheldRelease)
 
 
-def test_inputs_carry_nothing_withheld(withheld: release.WithheldRelease) -> None:
+def test_the_family_carries_nothing_withheld(withheld: release.WithheldRelease) -> None:
     case = withheld.cases[0]
     forbidden = {
         case.id,
@@ -89,5 +89,4 @@ def test_inputs_carry_nothing_withheld(withheld: release.WithheldRelease) -> Non
         forbidden |= {str(p.variant.pos), f'{p.variant.chrom}:{p.variant.pos}'}
     if case.answer.cutoff is not None:
         forbidden.add(case.answer.cutoff.isoformat())
-    for run in item.items(withheld):
-        assert not forbidden & set(strings(run.input.model_dump(mode='json')))
+    assert not forbidden & set(strings(case.family.model_dump(mode='json')))
