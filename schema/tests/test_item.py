@@ -12,7 +12,7 @@ _MODULES = (ids, item, record, release, variant, visibility)
 
 
 # Id types that name something withheld.
-_WITHHELD_IDS = (ids.CaseId, ids.BackgroundId, ids.CaseInstanceId)
+_WITHHELD_IDS = (ids.CaseId, ids.SampleId, ids.CaseInstanceId)
 
 
 def reachable_types(root: type[pydantic.BaseModel]) -> set[object]:
@@ -80,7 +80,11 @@ def test_the_reachability_walk_finds_withheld_types() -> None:
 
 def test_inputs_carry_nothing_withheld(withheld: release.WithheldRelease) -> None:
     case = withheld.cases[0]
-    forbidden = {case.id, *(b.id for b in withheld.backgrounds), *(i.id for i in withheld.instances)}
+    forbidden = {
+        case.id,
+        *(i.id for i in withheld.instances),
+        *(s.sample for i in withheld.instances for s in i.samples),
+    }
     for p in case.answer.placements:
         forbidden |= {str(p.variant.pos), f'{p.variant.chrom}:{p.variant.pos}'}
     if case.answer.cutoff is not None:

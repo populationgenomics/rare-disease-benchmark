@@ -21,36 +21,35 @@ def as_singleton(data: dict[str, Any]) -> None:
     case['answer']['placements'] = [
         p for p in case['answer']['placements'] if p['haplotype']['individual'] == 'proband'
     ]
+    for i in data['instances']:
+        i['samples'] = i['samples'][:1]
 
 
 def test_a_case_may_have_several_instances_in_one_release(withheld: release.WithheldRelease) -> None:
     assert len({i.case for i in withheld.instances}) < len(withheld.instances)
 
 
-def test_a_case_without_parents_builds_into_a_trio(release_data: dict[str, Any]) -> None:
+def test_a_case_without_parents_maps_only_the_proband(release_data: dict[str, Any]) -> None:
     withheld = release.WithheldRelease.model_validate(changed(release_data, as_singleton))
     for run in item.items(withheld):
         assert len(run.input.members) == 1
 
 
-def add_sibling(data: dict[str, Any]) -> None:
-    data['cases'][0]['family']['members'].append(
-        {'id': 'sibling', 'father': 'father', 'mother': 'mother', 'sex': 'male', 'affected': False}
-    )
-
-
 REJECTED: dict[str, tuple[Change, str]] = {
-    'proband and background child differ in sex': (
-        lambda d: d['backgrounds'][0].update(child_sex='male'),
-        'is female, and the child',
+    'a member without a sample': (lambda d: instance(d, 0)['samples'].pop(), 'maps members'),
+    'a sample for someone not in the family': (
+        lambda d: instance(d, 0)['samples'].append({'member': 'sibling', 'sample': 'NA19241'}),
+        'maps members',
     ),
-    'family beyond the trio': (add_sibling, 'beyond the proband'),
-    'same case twice in one background': (
-        lambda d: instance(d, 1).update(background=instance(d, 0)['background']),
-        r'\(case, background\) pair',
+    'one sample for two members': (
+        lambda d: instance(d, 0)['samples'][2].update(sample=instance(d, 0)['samples'][1]['sample']),
+        'repeats sample',
+    ),
+    'same case twice into the same samples': (
+        lambda d: instance(d, 1).update(samples=instance(d, 0)['samples']),
+        'same samples',
     ),
     'unknown case': (lambda d: instance(d, 0).update(case='case-18'), 'unknown case'),
-    'unknown background': (lambda d: instance(d, 0).update(background='bg-trio-z'), 'unknown background'),
     'version without three parts': (lambda d: d.update(release='1.0'), 'MAJOR.MINOR.PATCH'),
 }
 

@@ -1,7 +1,7 @@
 """The case record: what a curator writes for one solved case.
 
-A case names no background and holds no sequencing data, so it can be built into any background whose structure fits,
-as often as needed. It has two parts, and the split is the blinding boundary:
+A case names no sequenced sample and holds no sequencing data, so it can be built into the data of any real family whose
+structure fits, as often as needed. It has two parts, and the split is the blinding boundary:
 
 - `family`: the pedigree, with each member's clinical presentation. It is open: a system under test receives it as it
   stands, and its member ids are the sample names in the released files.

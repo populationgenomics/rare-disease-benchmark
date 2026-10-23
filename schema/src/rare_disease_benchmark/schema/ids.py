@@ -13,6 +13,6 @@ type MemberId = str
 # under test never sees it.
 type CaseInstanceId = str
 
-# Withheld: the name of a background's catalogue entry. Only the build and the checks on a release use it; a system
-# under test learns nothing about how an instance was built.
-type BackgroundId = str
+# Withheld: a sequenced sample as its source names it, such as NA19240 in 1000 Genomes. The build resolves it to that
+# sample's prepared data. Withheld because a public sample's published genome could be subtracted from the files.
+type SampleId = str

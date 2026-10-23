@@ -20,8 +20,9 @@ stays cached after deletion.
   deliberately; put a case field in `Case.family` only if a system under test should receive it.
 - Open means what the system under test sees: the case's family as recorded, and the sequencing files. The harness and
   the grader read the withheld side, which holds everything else, including the instance id, the cutoff and everything
-  about the build. No open model has a field typed `CaseId`, `BackgroundId` or `CaseInstanceId`.
-- A case names no background. What connects a case to a background is a `CaseInstance`.
+  about the build. No open model has a field typed `CaseId`, `SampleId` or `CaseInstanceId`.
+- A case names no sequenced sample. A `CaseInstance` maps its members to real samples; whether those samples fit the
+  case (relationships, sexes, family structure) is the build's check, not the schema's.
 - Member ids are relational labels (`proband`, `father`, `sister_2`) and become sample names in released files, so they
   reveal nothing about the case.
 

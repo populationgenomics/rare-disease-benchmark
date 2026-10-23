@@ -51,22 +51,26 @@
       }
     }
   ],
-  "backgrounds": [
-    {"id": "bg-trio-a", "child_sex": "female"},
-    {"id": "bg-trio-b", "child_sex": "female"}
-  ],
   "instances": [
     {
       "id": "r1-07",
       "case": "case-17",
-      "background": "bg-trio-a",
-      "pipeline_version": "0.1.0"
+      "pipeline_version": "0.1.0",
+      "samples": [
+        {"member": "proband", "sample": "NA19240"},
+        {"member": "father", "sample": "NA19239"},
+        {"member": "mother", "sample": "NA19238"}
+      ]
     },
     {
       "id": "r1-12",
       "case": "case-17",
-      "background": "bg-trio-b",
-      "pipeline_version": "0.1.0"
+      "pipeline_version": "0.1.0",
+      "samples": [
+        {"member": "proband", "sample": "HG00733"},
+        {"member": "father", "sample": "HG00731"},
+        {"member": "mother", "sample": "HG00732"}
+      ]
     }
   ]
 }

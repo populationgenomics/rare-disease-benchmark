@@ -13,7 +13,7 @@ _FIXTURE = pathlib.Path(__file__).parent / 'fixtures' / 'withheld-release.json'
 
 @pytest.fixture
 def release_data() -> dict[str, Any]:
-    """The invented case 17 in two backgrounds, as JSON."""
+    """The invented case 17 built into two 1000 Genomes trios, as JSON."""
     return json.loads(_FIXTURE.read_text('utf-8'))
 
 

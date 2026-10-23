@@ -12,11 +12,12 @@ A **case** is what a curator records for one solved case: the family, the clinic
 placements (each putting one variant on one chromosome copy of one family member) and the diagnosis. A case names no
 background genome, so it can be built into any background whose family structure fits.
 
-A **background** is a real sequenced family, prepared once and fixed, into which cases are built.
+A **background** is a real sequenced family, such as a 1000 Genomes trio, whose data cases are built into.
 
-A **case instance** is one case built into one background, as issued in one release: a synthetic genome for each family
-member, with the pedigree and the clinical presentation. A release can hold several instances of the same case in
-different backgrounds, so that results can be checked for robustness to the background.
+A **case instance** is one case built into a background, mapping each family member to a real sample, as issued in one
+release: a synthetic genome for each family member, with the pedigree and the clinical presentation. A release can hold
+several instances of the same case in different backgrounds, so that results can be checked for robustness to the
+background.
 
 A **release** is a versioned set of case instances that never changes after it is issued. Everything in it is on the
 open side, which the system under test sees, or on the withheld side, which only the harness and the grader read. The
@@ -25,9 +26,9 @@ family: the pedigree and each member's clinical presentation.
 
 ## Layout
 
-| Folder    | Contents                                                                                    |
-| --------- | ------------------------------------------------------------------------------------------- |
-| `schema/` | The shared types: the case record, backgrounds, case instances, and what a system receives. |
+| Folder    | Contents                                                                       |
+| --------- | ------------------------------------------------------------------------------ |
+| `schema/` | The shared types: the case record, case instances, and what a system receives. |
 
 Each top-level folder is its own package under the `rare_disease_benchmark` namespace and installs on its own.
 
