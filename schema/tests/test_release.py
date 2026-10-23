@@ -55,7 +55,7 @@ REJECTED: dict[str, tuple[Change, str]] = {
         lambda d: instance(d, 1)['members'][0].update(release_sample=instance(d, 0)['members'][0]['release_sample']),
         'release sample id',
     ),
-    'a member without a release sample id': (lambda d: instance(d, 0)['members'].pop(), 'maps samples'),
+    'a member without a release sample id': (lambda d: instance(d, 0)['members'].pop(), 'maps members'),
     'release sample id equal to a record member id': (
         lambda d: instance(d, 0)['members'][0].update(release_sample='proband'),
         'member id of the case record',

@@ -54,7 +54,7 @@ class Region(enum.StrEnum):
 class Haplotype(visibility.WithheldModel, frozen=True):
     """One of a member's chromosome copies, named the way every phased trio names them."""
 
-    individual: ids.SampleId
+    individual: ids.MemberId
     name: HaplotypeName
 
 

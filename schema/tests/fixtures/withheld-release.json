@@ -61,9 +61,9 @@
       "background": "bg-trio-a",
       "pipeline_version": "0.1.0",
       "members": [
-        {"sample": "proband", "release_sample": "r1-s-0412"},
-        {"sample": "father", "release_sample": "r1-s-1187"},
-        {"sample": "mother", "release_sample": "r1-s-0093"}
+        {"member": "proband", "release_sample": "r1-s-0412"},
+        {"member": "father", "release_sample": "r1-s-1187"},
+        {"member": "mother", "release_sample": "r1-s-0093"}
       ]
     },
     {
@@ -72,9 +72,9 @@
       "background": "bg-trio-b",
       "pipeline_version": "0.1.0",
       "members": [
-        {"sample": "proband", "release_sample": "r1-s-0730"},
-        {"sample": "father", "release_sample": "r1-s-0256"},
-        {"sample": "mother", "release_sample": "r1-s-1461"}
+        {"member": "proband", "release_sample": "r1-s-0730"},
+        {"member": "father", "release_sample": "r1-s-0256"},
+        {"member": "mother", "release_sample": "r1-s-1461"}
       ]
     }
   ]

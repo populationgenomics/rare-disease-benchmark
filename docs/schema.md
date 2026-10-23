@@ -54,7 +54,7 @@ classDiagram
             vaf: float?
         }
         class Haplotype {
-            individual: SampleId
+            individual: MemberId
             name: HaplotypeName
         }
         class HaplotypeName {
@@ -108,7 +108,7 @@ classDiagram
             input: CaseOpen
         }
         class InstanceMember {
-            sample: SampleId
+            member: MemberId
             release_sample: ReleaseSampleId
         }
     }
@@ -119,18 +119,18 @@ classDiagram
             clinical_presentation: ClinicalPresentation[*]
         }
         class Family {
-            proband: SampleId
+            proband: MemberId
             members: Individual[*]
         }
         class Individual {
-            id: SampleId
-            father: SampleId?
-            mother: SampleId?
+            id: MemberId
+            father: MemberId?
+            mother: MemberId?
             sex: male | female | unknown
             affected: bool?
         }
         class ClinicalPresentation {
-            individual: SampleId
+            individual: MemberId
             hpo_present: str[*]
             hpo_excluded: str[*]
             onset, age, panel: str?

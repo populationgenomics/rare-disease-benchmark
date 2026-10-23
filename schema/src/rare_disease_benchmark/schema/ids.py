@@ -5,8 +5,9 @@ from __future__ import annotations
 # Withheld: the case's own id, never written to the open side.
 type CaseId = str
 
-# Withheld: a member's id within the case record. The open side carries ReleaseSampleId instead.
-type SampleId = str
+# Withheld: a label for one family member within one case record, such as 'proband'. It names no sequenced sample;
+# the open side carries a ReleaseSampleId in its place.
+type MemberId = str
 
 # Open: a member's id in one case instance of one release. Reveals nothing about the case, and differs between two
 # instances of the same case.

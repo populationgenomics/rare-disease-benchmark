@@ -33,7 +33,7 @@ class Background(visibility.WithheldModel, frozen=True):
 class InstanceMember(visibility.WithheldModel, frozen=True):
     """One family member's id in the case record, and the id the release gives that member in this instance."""
 
-    sample: ids.SampleId
+    member: ids.MemberId
     release_sample: ids.ReleaseSampleId
 
 
@@ -51,15 +51,15 @@ class CaseInstance(visibility.WithheldModel, frozen=True):
     pipeline_version: str
     members: tuple[InstanceMember, ...]  # every member of the case's family, once
 
-    def release_sample(self, sample: ids.SampleId) -> ids.ReleaseSampleId:
+    def release_sample(self, member_id: ids.MemberId) -> ids.ReleaseSampleId:
         for m in self.members:
-            if m.sample == sample:
+            if m.member == member_id:
                 return m.release_sample
-        raise KeyError(f'{sample!r} is not a member of case instance {self.id!r}')
+        raise KeyError(f'{member_id!r} is not a member of case instance {self.id!r}')
 
     @pydantic.model_validator(mode='after')
     def _check(self) -> Self:
-        for field in ('sample', 'release_sample'):
+        for field in ('member', 'release_sample'):
             if repeated := _repeated(getattr(m, field) for m in self.members):
                 raise ValueError(f'case instance {self.id!r} repeats {field} {repeated}')
         return self
@@ -130,11 +130,11 @@ def _check_fits(case: record.Case, background: Background, instance: CaseInstanc
             f'case instance {instance.id!r}: the proband of case {case.id!r} is {proband.sex}, '
             f'and the child of background {background.id!r} is {background.child_sex}'
         )
-    mapped = {m.sample for m in instance.members}
+    mapped = {m.member for m in instance.members}
     members = {m.id for m in family.members}
     if mapped != members:
         raise ValueError(
-            f'case instance {instance.id!r} maps samples {sorted(mapped)}, '
+            f'case instance {instance.id!r} maps members {sorted(mapped)}, '
             f'and case {case.id!r} has members {sorted(members)}'
         )
 

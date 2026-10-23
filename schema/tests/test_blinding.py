@@ -12,7 +12,7 @@ from rare_disease_benchmark.schema import blinding, ids, item, record, release, 
 _MODULES = (ids, item, record, release, variant, visibility)
 
 
-# Id types that name something withheld. SampleId is not among them: the open section reuses it for the release
+# Id types that name something withheld. MemberId is not among them: the open section reuses it for the release
 # sample ids it carries after re-keying.
 _WITHHELD_IDS = (ids.CaseId, ids.BackgroundId, ids.CaseInstanceId)
 

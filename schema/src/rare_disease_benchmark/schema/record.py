@@ -35,28 +35,28 @@ _HPO_ID = re.compile(r'HP:\d{7}')
 class Individual(visibility.OpenModel, frozen=True):
     """One PED row."""
 
-    id: ids.SampleId
-    father: ids.SampleId | None = None  # None: not in the family
-    mother: ids.SampleId | None = None  # None: not in the family
+    id: ids.MemberId
+    father: ids.MemberId | None = None  # None: not in the family
+    mother: ids.MemberId | None = None  # None: not in the family
     sex: Sex  # unknown as PED permits, though not for the proband
     affected: bool | None = None  # None: unknown, as PED permits
 
 
 class Family(visibility.OpenModel, frozen=True):
-    proband: ids.SampleId
+    proband: ids.MemberId
     members: tuple[Individual, ...]
 
-    def member(self, sample: ids.SampleId) -> Individual:
+    def member(self, member_id: ids.MemberId) -> Individual:
         for individual in self.members:
-            if individual.id == sample:
+            if individual.id == member_id:
                 return individual
-        raise KeyError(f'{sample!r} is not a member of the family')
+        raise KeyError(f'{member_id!r} is not a member of the family')
 
-    def require_member(self, sample: ids.SampleId, context: str) -> Individual:
+    def require_member(self, member_id: ids.MemberId, context: str) -> Individual:
         """`member`, raising the ValueError a validator reports rather than a KeyError."""
-        if sample not in {m.id for m in self.members}:
-            raise ValueError(f'{context}: {sample!r} is not a member of the family')
-        return self.member(sample)
+        if member_id not in {m.id for m in self.members}:
+            raise ValueError(f'{context}: {member_id!r} is not a member of the family')
+        return self.member(member_id)
 
     @property
     def proband_individual(self) -> Individual:
@@ -82,9 +82,9 @@ class Family(visibility.OpenModel, frozen=True):
                 raise ValueError(f'{m.id!r} is their own ancestor')
         return self
 
-    def _ancestors(self, sample: ids.SampleId) -> set[ids.SampleId]:
-        seen: set[ids.SampleId] = set()
-        stack = [sample]
+    def _ancestors(self, member_id: ids.MemberId) -> set[ids.MemberId]:
+        seen: set[ids.MemberId] = set()
+        stack = [member_id]
         while stack:
             m = self.member(stack.pop())
             for parent in (m.father, m.mother):
@@ -97,7 +97,7 @@ class Family(visibility.OpenModel, frozen=True):
 class ClinicalPresentation(visibility.OpenModel, frozen=True):
     """What the laboratory had for one member, at the level of detail the source holds."""
 
-    individual: ids.SampleId
+    individual: ids.MemberId
     hpo_present: tuple[str, ...] = ()  # HPO ids
     hpo_excluded: tuple[str, ...] = ()  # HPO ids
     onset: str | None = None  # an HPO onset term or the source's wording. None: not recorded
@@ -134,8 +134,8 @@ class CaseOpen(visibility.OpenModel, frozen=True):
         presented = [p.individual for p in self.clinical_presentation]
         if len(set(presented)) != len(presented):
             raise ValueError(f'more than one clinical presentation for a member: {presented}')
-        for sample in presented:
-            self.family.require_member(sample, 'clinical presentation')
+        for member_id in presented:
+            self.family.require_member(member_id, 'clinical presentation')
         return self
 
 
