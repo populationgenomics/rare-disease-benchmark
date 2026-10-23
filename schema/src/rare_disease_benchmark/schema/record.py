@@ -27,7 +27,6 @@ type Provenance = Literal['real', 'derived', 'invented']
 type Sharing = Literal['internal', 'partners', 'public']
 
 _HPO_ID = re.compile(r'HP:\d{7}')
-_HGNC_ID = re.compile(r'HGNC:\d+')
 
 # Relational labels such as proband, father, half_sister or sister_2. Member ids become the sample names in released
 # files, so the form keeps out accessions and other identifiers a source may use.
@@ -147,37 +146,17 @@ class Inheritance(enum.StrEnum):
     # extended as cases need it
 
 
-class CausativeVariant(visibility.WithheldModel, frozen=True):
-    variant: variant.Variant
-    first_public_date: dt.date | None = None  # ClinVar submission or publication. None: not public when recorded
-
-
 class Diagnosis(visibility.WithheldModel, frozen=True):
     disease: str  # a label, compared by the grader
     ontology_id: str | None = None  # a MONDO or OMIM id where one fits. None: no fitting term
     inheritance: Inheritance
-    genes: tuple[str, ...] = pydantic.Field(min_length=1)  # HGNC ids of the genes the diagnosis implicates
-    variants: tuple[CausativeVariant, ...] = pydantic.Field(min_length=1)
-    # A compound heterozygote lists both variants; a homozygous variant is listed once, and its two placements show
-    # both copies.
-    association_first_public_date: dt.date | None = None
-    # When the gene-disease association was first published; a case whose cutoff is not after it is a discovery case.
-    # None: not known, and the case is not flagged.
-
-    @pydantic.field_validator('genes')
-    @classmethod
-    def _hgnc_ids(cls, genes: tuple[str, ...]) -> tuple[str, ...]:
-        for gene in genes:
-            if not _HGNC_ID.fullmatch(gene):
-                raise ValueError(f'{gene!r} is not an HGNC id of the form HGNC:1234')
-        if len(set(genes)) != len(genes):
-            raise ValueError(f'repeated HGNC ids: {genes}')
-        return genes
+    variants: tuple[variant.Variant, ...] = pydantic.Field(min_length=1)
+    # The causative variants. A compound heterozygote lists both; a homozygous variant is listed once, and its two
+    # placements show both copies.
 
     @pydantic.model_validator(mode='after')
     def _check(self) -> Self:
-        listed = [v.variant for v in self.variants]
-        if any(listed.count(v) > 1 for v in listed):
+        if any(self.variants.count(v) > 1 for v in self.variants):
             raise ValueError(f'a causative variant is listed twice in the diagnosis of {self.disease!r}')
         return self
 
@@ -190,25 +169,19 @@ class CaseAnswer(visibility.WithheldModel, frozen=True):
 
     placements: tuple[variant.Placement, ...]  # every variant in the case, once per copy per carrier
     diagnoses: tuple[Diagnosis, ...] = pydantic.Field(min_length=1)
+    cutoff: dt.date | None
+    # The earliest date any causative variant became public, as a ClinVar submission or a publication; None if none was
+    # when recorded. Rolling resources back to before it hides every causative variant at once. The harness applies it,
+    # and the system under test never sees it, since it is the date a causative variant became public.
 
     @property
-    def causative_variants(self) -> Iterator[CausativeVariant]:
+    def causative_variants(self) -> Iterator[variant.Variant]:
         for diagnosis in self.diagnoses:
             yield from diagnosis.variants
 
     @property
-    def cutoff(self) -> dt.date | None:
-        """The earliest date any causative variant became public; None if none is.
-
-        Rolling a system's resources back to before it hides every causative variant at once. The harness applies it;
-        the system under test never sees it, since it is the date a causative variant became public.
-        """
-        dates = [v.first_public_date for v in self.causative_variants if v.first_public_date is not None]
-        return min(dates, default=None)
-
-    @property
     def set_aside(self) -> tuple[variant.Variant, ...]:
-        causative = [v.variant for v in self.causative_variants]
+        causative = list(self.causative_variants)
         placed = dict.fromkeys(p.variant for p in self.placements)
         return tuple(v for v in placed if v not in causative)
 
@@ -251,10 +224,9 @@ class Case(visibility.WithheldModel, frozen=True):
             _check_placement(family, placement)
         for causative in self.answer.causative_variants:
             if not any(
-                p.variant == causative.variant and p.haplotype.individual == family.proband
-                for p in self.answer.placements
+                p.variant == causative and p.haplotype.individual == family.proband for p in self.answer.placements
             ):
-                raise ValueError(f'causative variant {_describe(causative.variant)} is not placed in the proband')
+                raise ValueError(f'causative variant {_describe(causative)} is not placed in the proband')
         return self
 
 

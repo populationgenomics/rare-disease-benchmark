@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime as dt
 from typing import Any
 
 import pydantic
@@ -31,13 +30,9 @@ def as_son(case: dict[str, Any]) -> None:
     members(case)[0]['sex'] = 'male'
 
 
-def test_fixture_cutoff_is_the_earliest_public_causative_variant(withheld: release.WithheldRelease) -> None:
-    assert withheld.cases[0].answer.cutoff == dt.date(2016, 3, 14)
-
-
 def test_placed_variants_outside_every_diagnosis_are_set_aside(withheld: release.WithheldRelease) -> None:
     answer = withheld.cases[0].answer
-    causative = {v.variant for v in answer.causative_variants}
+    causative = set(answer.causative_variants)
     assert answer.set_aside
     assert not causative & set(answer.set_aside)
     assert causative | set(answer.set_aside) == {p.variant for p in answer.placements}
@@ -174,8 +169,7 @@ REJECTED: dict[str, tuple[Change, str]] = {
         lambda c: members(c)[0]['presentation'].update(hpo_present=['microcephaly']),
         'HPO id',
     ),
-    'malformed HGNC id': (lambda c: c['answer']['diagnoses'][0].update(genes=['ASPM']), 'HGNC id'),
-    'diagnosis without a gene': (lambda c: c['answer']['diagnoses'][0].update(genes=[]), 'at least 1 item'),
+    'no cutoff recorded': (lambda c: c['answer'].pop('cutoff'), 'Field required'),
     'an unknown field': (lambda c: c['answer'].update(gene='ASPM'), 'Extra inputs'),
 }
 

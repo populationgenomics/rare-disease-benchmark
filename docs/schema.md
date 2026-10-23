@@ -43,7 +43,7 @@ classDiagram
     class CaseAnswer {
         placements: Placement[*]
         diagnoses: Diagnosis[1..*]
-        cutoff() date?
+        cutoff: date?
         set_aside() Variant[*]
     }
     class Placement {
@@ -74,13 +74,7 @@ classDiagram
         disease: str
         ontology_id: str?
         inheritance: Inheritance
-        genes: HGNC id[1..*]
-        variants: CausativeVariant[1..*]
-        association_first_public_date: date?
-    }
-    class CausativeVariant {
-        variant: Variant
-        first_public_date: date?
+        variants: Variant[1..*]
     }
     class Inheritance {
         <<enumeration>>
@@ -139,9 +133,8 @@ classDiagram
     Placement *-- Variant : variant
     Haplotype --> HaplotypeName : name
     Variant *-- Haplotype : origin
-    Diagnosis *-- CausativeVariant : variants
+    Diagnosis *-- Variant : variants
     Diagnosis --> Inheritance : inheritance
-    CausativeVariant *-- Variant : variant
     CaseInstance ..> Case : case
     CaseInstance *-- MemberSample : samples
     Family *-- Individual : members
@@ -157,7 +150,6 @@ classDiagram
     style HaplotypeName fill:#fcd9d9,stroke:#d9534f
     style Variant fill:#fcd9d9,stroke:#d9534f
     style Diagnosis fill:#fcd9d9,stroke:#d9534f
-    style CausativeVariant fill:#fcd9d9,stroke:#d9534f
     style Inheritance fill:#fcd9d9,stroke:#d9534f
     style MemberSample fill:#fcd9d9,stroke:#d9534f
     style CaseInstance fill:#fcd9d9,stroke:#d9534f
@@ -241,10 +233,9 @@ same way.
 The record has two parts because its fields go to two different readers. `family` holds the pedigree and each member's
 clinical presentation, and the system under test receives it exactly as recorded. `answer` holds the placements and the
 diagnoses, which only the grader reads; placed variants that belong to no diagnosis are the candidates the laboratory
-set aside. Each diagnosis names the genes it implicates by HGNC id, which the build's check of the background and the
-release's leak check look for. The bookkeeping fields (source, provenance, sharing level and notes) are withheld as
-well. Adding a field to the record therefore means choosing a part, and the reviewer sees that choice in the diff. A
-field added to `family` reaches the system under test with no further code; a field added anywhere else never does.
+set aside. The bookkeeping fields (source, provenance, sharing level and notes) are withheld as well. Adding a field to
+the record therefore means choosing a part, and the reviewer sees that choice in the diff. A field added to `family`
+reaches the system under test with no further code; a field added anywhere else never does.
 
 Nothing derived from `answer` reaches the system under test. The harness does read one such value, the cutoff: the
 earliest date any causative variant became public, before which it rolls back clinical-assertion databases and
@@ -368,5 +359,4 @@ cutoffs published separately. That would add a third tier between the two sides 
 Three tests keep the boundary in place. Two walk every type reachable from `Family`, the only open data: one fails if
 any of them is a `WithheldModel`, the other if a field is typed with a withheld id (`CaseId`, `SampleId` or
 `CaseInstanceId`). A withheld type or id placed in the family therefore fails CI. The third serialises each item's input
-and fails if the case id, a sample id, an instance id, a diagnosis's HGNC id, the cutoff or a placed position appears
-among its values.
+and fails if the case id, a sample id, an instance id, the cutoff or a placed position appears among its values.

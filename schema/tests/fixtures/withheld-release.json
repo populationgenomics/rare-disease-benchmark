@@ -42,13 +42,13 @@
           {
             "disease": "autosomal recessive primary microcephaly",
             "inheritance": "AR",
-            "genes": ["HGNC:19048"],
             "variants": [
-              {"variant": {"chrom": "chr1", "pos": 197090000, "ref": "C", "alt": "T"}, "first_public_date": "2016-03-14"},
-              {"variant": {"chrom": "chr1", "pos": 197120000, "ref": "G", "alt": "A"}}
+              {"chrom": "chr1", "pos": 197090000, "ref": "C", "alt": "T"},
+              {"chrom": "chr1", "pos": 197120000, "ref": "G", "alt": "A"}
             ]
           }
-        ]
+        ],
+        "cutoff": "2016-03-14"
       }
     }
   ],
