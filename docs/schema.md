@@ -14,20 +14,13 @@ Most of the design follows from keeping that split hard to get wrong.
 
 ## Overview
 
-Red classes are withheld, read only by the harness and the grader; blue classes are open, seen by the system under test.
-Every model in the code derives from `WithheldModel` or `OpenModel` accordingly. Solid arrows are containment, dashed
-arrows a reference by id.
+Blue classes, grouped in the Open box, are open: the system under test sees them. Red classes are withheld, read only by
+the harness and the grader. Every model in the code derives from `OpenModel` or `WithheldModel` accordingly. Solid
+arrows are containment, dashed arrows a reference by id.
 
 ```mermaid
 classDiagram
     direction LR
-
-    class LegendWithheld["Legend: withheld"] {
-        read by the harness and the grader
-    }
-    class LegendOpen["Legend: open"] {
-        seen by the system under test
-    }
 
     class WithheldRelease {
         release: str
@@ -113,24 +106,26 @@ classDiagram
         input: Family
     }
 
-    class Family {
-        proband: MemberId
-        members: Individual[*]
-    }
-    class Individual {
-        id: MemberId
-        father: MemberId?
-        mother: MemberId?
-        sex: male | female | unknown
-        affected: bool?
-        presentation: ClinicalPresentation?
-    }
-    class ClinicalPresentation {
-        hpo_present: str[*]
-        hpo_excluded: str[*]
-        onset, age, panel: str?
-        reason_for_referral: str?
-        text: str?
+    namespace Open {
+        class Family {
+            proband: MemberId
+            members: Individual[*]
+        }
+        class Individual {
+            id: MemberId
+            father: MemberId?
+            mother: MemberId?
+            sex: male | female | unknown
+            affected: bool?
+            presentation: ClinicalPresentation?
+        }
+        class ClinicalPresentation {
+            hpo_present: str[*]
+            hpo_excluded: str[*]
+            onset, age, panel: str?
+            reason_for_referral: str?
+            text: str?
+        }
     }
 
     WithheldRelease *-- Case : cases
@@ -154,8 +149,6 @@ classDiagram
     Individual *-- ClinicalPresentation : presentation
     Item *-- Family : input, the case's family
 
-    style LegendWithheld fill:#fcd9d9,stroke:#d9534f
-    style LegendOpen fill:#d6e6fb,stroke:#4a86d4
     style WithheldRelease fill:#fcd9d9,stroke:#d9534f
     style Case fill:#fcd9d9,stroke:#d9534f
     style Source fill:#fcd9d9,stroke:#d9534f
