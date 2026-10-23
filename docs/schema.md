@@ -51,7 +51,14 @@ classDiagram
         }
         class Haplotype {
             individual: SampleId
-            name: paternal | maternal | transmitted | non_transmitted
+            name: HaplotypeName
+        }
+        class HaplotypeName {
+            <<enumeration>>
+            paternal
+            maternal
+            transmitted
+            non_transmitted
         }
         class Variant {
             chrom: str
@@ -144,6 +151,7 @@ classDiagram
     CaseAnswer *-- Diagnosis : diagnoses
     Placement *-- Haplotype : haplotype
     Placement *-- Variant : variant
+    Haplotype --> HaplotypeName : name
     Variant *-- Haplotype : origin
     Diagnosis *-- CausativeVariant : variants
     Diagnosis --> Inheritance : inheritance
@@ -163,6 +171,7 @@ classDiagram
     style CaseAnswer fill:#fcd9d9,stroke:#d9534f
     style Placement fill:#fcd9d9,stroke:#d9534f
     style Haplotype fill:#fcd9d9,stroke:#d9534f
+    style HaplotypeName fill:#fcd9d9,stroke:#d9534f
     style Variant fill:#fcd9d9,stroke:#d9534f
     style Diagnosis fill:#fcd9d9,stroke:#d9534f
     style CausativeVariant fill:#fcd9d9,stroke:#d9534f
@@ -212,18 +221,18 @@ the open side connects the two items or points back to the case.
 
 ```mermaid
 flowchart LR
-    subgraph REC["case-17, withheld"]
-        direction TB
-        p["proband<br/>female, affected"]
-        f["father<br/>male, unaffected"]
-        m["mother<br/>female, unaffected"]
-    end
-
     subgraph I1["case instance r1-07: built into bg-trio-a"]
         direction TB
         a1["r1-s-0412<br/>bg-trio-a child"]
         a2["r1-s-1187<br/>bg-trio-a father"]
         a3["r1-s-0093<br/>bg-trio-a mother"]
+    end
+
+    subgraph REC["case-17, withheld"]
+        direction TB
+        p["proband<br/>female, affected"]
+        f["father<br/>male, unaffected"]
+        m["mother<br/>female, unaffected"]
     end
 
     subgraph I2["case instance r1-12: built into bg-trio-b"]
@@ -233,13 +242,14 @@ flowchart LR
         b3["r1-s-1461<br/>bg-trio-b mother"]
     end
 
-    p --> a1
-    f --> a2
-    m --> a3
-    p --> b1
-    f --> b2
-    m --> b3
+    a1 --- p
+    a2 --- f
+    a3 --- m
+    p --- b1
+    f --- b2
+    m --- b3
 
+    classDef default fill:#ffffff,stroke:#888888
     style REC fill:#fcd9d9,stroke:#d9534f
     style I1 fill:#d6e6fb,stroke:#4a86d4
     style I2 fill:#d6e6fb,stroke:#4a86d4
@@ -309,6 +319,7 @@ flowchart LR
     SUT -- "submission" --> GRADER
     CASE -- "answer" --> GRADER
 
+    classDef default fill:#ffffff,stroke:#888888
     style W fill:#fcd9d9,stroke:#d9534f
     style O fill:#d6e6fb,stroke:#4a86d4
     style G fill:#eeeeee,stroke:#999999
