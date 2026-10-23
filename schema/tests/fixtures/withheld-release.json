@@ -1,0 +1,77 @@
+{
+  "release": "1.0.0",
+  "cases": [
+    {
+      "id": "case-17",
+      "source": {"programme": null, "accession": null},
+      "provenance": "invented",
+      "sharing": "public",
+      "notes": "Invented example; positions and dates are illustrative. The SCN1A variant is a candidate the laboratory set aside because the unaffected father carries it.",
+      "family": {
+        "proband": "proband",
+        "members": [
+          {
+            "id": "proband",
+            "father": "father",
+            "mother": "mother",
+            "sex": "female",
+            "affected": true,
+            "presentation": {
+              "hpo_present": ["HP:0000252", "HP:0001250", "HP:0001263"],
+              "hpo_excluded": ["HP:0001627"],
+              "age": "4 years",
+              "panel": "Microcephaly",
+              "reason_for_referral": "Microcephaly and seizures",
+              "text": "Four-year-old girl with microcephaly noted at birth, global developmental delay, and focal seizures since the age of two. Echocardiogram normal. Parents well and unrelated; no family history."
+            }
+          },
+          {"id": "father", "sex": "male", "affected": false},
+          {"id": "mother", "sex": "female", "affected": false}
+        ]
+      },
+      "answer": {
+        "placements": [
+          {"haplotype": {"member": "proband", "name": "paternal"}, "variant": {"chrom": "chr1", "pos": 197090000, "ref": "C", "alt": "T"}},
+          {"haplotype": {"member": "father", "name": "transmitted"}, "variant": {"chrom": "chr1", "pos": 197090000, "ref": "C", "alt": "T"}},
+          {"haplotype": {"member": "proband", "name": "maternal"}, "variant": {"chrom": "chr1", "pos": 197120000, "ref": "G", "alt": "A"}},
+          {"haplotype": {"member": "mother", "name": "transmitted"}, "variant": {"chrom": "chr1", "pos": 197120000, "ref": "G", "alt": "A"}},
+          {"haplotype": {"member": "proband", "name": "paternal"}, "variant": {"chrom": "chr2", "pos": 166010000, "ref": "T", "alt": "C"}},
+          {"haplotype": {"member": "father", "name": "transmitted"}, "variant": {"chrom": "chr2", "pos": 166010000, "ref": "T", "alt": "C"}}
+        ],
+        "diagnoses": [
+          {
+            "disease": "autosomal recessive primary microcephaly",
+            "inheritance": "AR",
+            "variants": [
+              {"chrom": "chr1", "pos": 197090000, "ref": "C", "alt": "T"},
+              {"chrom": "chr1", "pos": 197120000, "ref": "G", "alt": "A"}
+            ]
+          }
+        ],
+        "cutoff": "2016-03-14"
+      }
+    }
+  ],
+  "instances": [
+    {
+      "id": "r1-07",
+      "case": "case-17",
+      "pipeline_version": "0.1.0",
+      "samples": [
+        {"member": "proband", "sample": "NA19240"},
+        {"member": "father", "sample": "NA19239"},
+        {"member": "mother", "sample": "NA19238"}
+      ]
+    },
+    {
+      "id": "r1-12",
+      "case": "case-17",
+      "pipeline_version": "0.1.0",
+      "samples": [
+        {"member": "proband", "sample": "HG00733"},
+        {"member": "father", "sample": "HG00731"},
+        {"member": "mother", "sample": "HG00732"}
+      ]
+    }
+  ]
+}

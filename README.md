@@ -1,0 +1,57 @@
+# rare-disease-benchmark
+
+Groups building tools to diagnose rare genetic disease need test cases with known answers, and real cases can almost
+never be shared. This repository holds the code for a benchmark built around that constraint: curated cases are placed
+into the sequencing data of real, consented, public families, which yields synthetic genomes that look like a real case
+to the tool under test, carry a known answer, and identify nobody. Releases of them can be exchanged and run by any
+group.
+
+## Concepts
+
+A **case** is what a curator records for one solved case: the family, the clinical presentation of each member, the
+placements (each putting one variant on one chromosome copy of one family member) and the diagnosis. A case names no
+real sample, so it can be built into the data of any family related the same way.
+
+A **background** is a real sequenced family, such as a 1000 Genomes trio, whose data cases are built into.
+
+A **case instance** is one case built into a background, mapping each family member to a real sample, as issued in one
+release: a synthetic genome for each family member, with the pedigree and the clinical presentation. A release can hold
+several instances of the same case in different backgrounds, so that results can be checked for robustness to the
+background.
+
+A **release** is a versioned set of case instances that never changes after it is issued. Everything in it is on the
+open side, which the system under test sees, or on the withheld side, which only the harness and the grader read. The
+schema makes the split structural: every model is declared open or withheld, and the only open data a case holds is its
+family, meaning the pedigree and each member's clinical presentation.
+
+## Layout
+
+| Folder    | Contents                                                                       |
+| --------- | ------------------------------------------------------------------------------ |
+| `schema/` | The shared types: the case record, case instances, and what a system receives. |
+
+Each top-level folder is its own package under the `rare_disease_benchmark` namespace and installs on its own.
+
+[docs/schema.md](docs/schema.md) explains the schema, with diagrams.
+
+This repository holds code and configuration only. No case, background genome or withheld side of any release is
+committed, and the test fixtures are invented.
+
+## Development
+
+The workspace is managed with [uv](https://docs.astral.sh/uv/).
+
+```sh
+uv sync --group lint
+uv run pre-commit install
+uv run pytest
+```
+
+`uv run pre-commit run --all-files` runs the same static checks as CI: ruff, pyright and the formatters.
+
+Dependency resolution ignores releases younger than seven days (`exclude-newer` in `pyproject.toml`), and Dependabot
+waits the same period.
+
+## Licence
+
+Apache-2.0; see [LICENSE](LICENSE).
