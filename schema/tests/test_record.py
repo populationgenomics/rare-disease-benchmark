@@ -20,7 +20,7 @@ def case_data(release_data: dict[str, Any]) -> dict[str, Any]:
 
 
 def members(case: dict[str, Any]) -> list[dict[str, Any]]:
-    return case['open']['family']['members']
+    return case['family']['members']
 
 
 def placements(case: dict[str, Any]) -> list[dict[str, Any]]:
@@ -161,12 +161,17 @@ REJECTED: dict[str, tuple[Change, str]] = {
     ),
     'proband of unknown sex': (lambda c: members(c)[0].update(sex='unknown'), 'known sex'),
     'father of female sex': (lambda c: members(c)[1].update(sex='female'), 'male parent'),
-    'presentation of a non-member': (
-        lambda c: c['open']['clinical_presentation'][0].update(individual='sibling'),
-        'not a member',
+    'member id that is not a relational label': (
+        lambda c: members(c)[2].update(id='S-0093'),
+        'not a relational label',
+    ),
+    # An accession that happens to look like a label; the record must not release it as a sample name.
+    'member id containing the source accession': (
+        lambda c: c['source'].update(accession='mother'),
+        "contains 'mother'",
     ),
     'malformed HPO id': (
-        lambda c: c['open']['clinical_presentation'][0].update(hpo_present=['microcephaly']),
+        lambda c: members(c)[0]['presentation'].update(hpo_present=['microcephaly']),
         'HPO id',
     ),
     'an unknown field': (lambda c: c['answer'].update(gene='ASPM'), 'Extra inputs'),

@@ -5,13 +5,9 @@ from __future__ import annotations
 # Withheld: the case's own id, never written to the open side.
 type CaseId = str
 
-# Withheld: a label for one family member within one case record, such as 'proband'. It names no sequenced sample;
-# the open side carries a ReleaseSampleId in its place.
+# Open: a relational label for one family member within one case, such as 'proband', 'father' or 'sister_2'. It is
+# also the sample's name in the released files and the PED, so it must reveal nothing about the case.
 type MemberId = str
-
-# Open: a member's id in one case instance of one release. Reveals nothing about the case, and differs between two
-# instances of the same case.
-type ReleaseSampleId = str
 
 # Withheld: the id of one case instance in one release. The harness keys a submission and its trace by it; the system
 # under test never sees it.

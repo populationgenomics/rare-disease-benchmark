@@ -5,8 +5,8 @@ sequencing data of a background family as one case instance of a release, and wh
 instance. The types live in [`schema/`](../schema/src/rare_disease_benchmark/schema), and this document explains how
 they fit together.
 
-Everything in a release is on one of two sides. The open side is what a system under test sees: the sequencing files,
-and the pedigree and clinical presentation keyed by release sample ids. The withheld side is everything else, and only
+Everything in a release is on one of two sides. The open side is what a system under test sees: the case's family as
+recorded (pedigree and clinical presentation) and the sequencing files. The withheld side is everything else, and only
 the harness and the grader read it. It holds the answer the grader compares a submission against, the instance id and
 cutoff the harness needs to run each case instance, and everything about how an instance was built, such as the
 background family it went into. The system under test needs none of these, and some would give part of the answer away.
@@ -35,7 +35,7 @@ classDiagram
             provenance: real | derived | invented
             sharing: internal | partners | public
             notes: str?
-            open: CaseOpen
+            family: Family
             answer: CaseAnswer
         }
         class Source {
@@ -100,24 +100,15 @@ classDiagram
             case: CaseId
             background: BackgroundId
             pipeline_version: str
-            members: InstanceMember[*]
         }
         class Item {
             id: CaseInstanceId
             cutoff: date?
-            input: CaseOpen
-        }
-        class InstanceMember {
-            member: MemberId
-            release_sample: ReleaseSampleId
+            input: Family
         }
     }
 
     namespace Open {
-        class CaseOpen {
-            family: Family
-            clinical_presentation: ClinicalPresentation[*]
-        }
         class Family {
             proband: MemberId
             members: Individual[*]
@@ -128,9 +119,9 @@ classDiagram
             mother: MemberId?
             sex: male | female | unknown
             affected: bool?
+            presentation: ClinicalPresentation?
         }
         class ClinicalPresentation {
-            individual: MemberId
             hpo_present: str[*]
             hpo_excluded: str[*]
             onset, age, panel: str?
@@ -143,7 +134,7 @@ classDiagram
     WithheldRelease *-- Background : backgrounds
     WithheldRelease *-- CaseInstance : instances
     Case *-- Source : source
-    Case *-- CaseOpen : open
+    Case *-- Family : family
     Case *-- CaseAnswer : answer
     CaseAnswer *-- Placement : placements
     CaseAnswer *-- Diagnosis : diagnoses
@@ -156,11 +147,9 @@ classDiagram
     CausativeVariant *-- Variant : variant
     CaseInstance ..> Case : case
     CaseInstance ..> Background : background
-    CaseInstance *-- InstanceMember : members
-    CaseOpen *-- Family : family
-    CaseOpen *-- ClinicalPresentation : clinical_presentation
     Family *-- Individual : members
-    Item *-- CaseOpen : input, re-keyed
+    Individual *-- ClinicalPresentation : presentation
+    Item *-- Family : input, the case's family
 
     style WithheldRelease fill:#fcd9d9,stroke:#d9534f
     style Case fill:#fcd9d9,stroke:#d9534f
@@ -175,13 +164,79 @@ classDiagram
     style Inheritance fill:#fcd9d9,stroke:#d9534f
     style Background fill:#fcd9d9,stroke:#d9534f
     style CaseInstance fill:#fcd9d9,stroke:#d9534f
-    style InstanceMember fill:#fcd9d9,stroke:#d9534f
     style Item fill:#fcd9d9,stroke:#d9534f
-    style CaseOpen fill:#d6e6fb,stroke:#4a86d4
     style Family fill:#d6e6fb,stroke:#4a86d4
     style Individual fill:#d6e6fb,stroke:#4a86d4
     style ClinicalPresentation fill:#d6e6fb,stroke:#4a86d4
 ```
+
+## Ids and what they name
+
+Four kinds of id appear in the schema. Only one of them, the member id, is open, and it is also the only one that names
+anything inside the released files.
+
+| Id               | Example     | Names                                                            | Side     |
+| ---------------- | ----------- | ---------------------------------------------------------------- | -------- |
+| `CaseId`         | `case-17`   | one case record                                                  | withheld |
+| `MemberId`       | `proband`   | one member of a case's family, and that member's sample in files | open     |
+| `BackgroundId`   | `bg-trio-a` | one prepared background trio in the catalogue                    | withheld |
+| `CaseInstanceId` | `r1-07`     | one case built into one background in one release                | withheld |
+
+A member id is a relational label such as `proband`, `father` or `sister_2`, and the record rejects anything else. A
+case holds no sequencing data, so within the record the label only lets one part refer to a person: the pedigree's
+parent links, and the placements that say whose chromosome copy to edit. In a release the same label is the sample's
+name in that instance's files and PED file. That is safe because a label says nothing beyond what the pedigree already
+shows, and the record also rejects a member id that contains the case id or the source accession.
+
+A background trio's members have sample names of their own, pseudonyms given when the background was prepared. The build
+replaces them with the case's member ids, so no released file carries them. The schema does not model them yet; they
+arrive with the background catalogue.
+
+Every trio case calls its proband `proband`, so sample names repeat across the instances of a release. A tool that needs
+names unique across a whole release, such as a database that holds every instance at once, can prefix each with the
+instance id, as in `r1-07_proband`.
+
+## From case to release
+
+A build takes one case and one background. From the case it reads the placements, which say which chromosome copy of
+which member carries which variant, and the family, which says who goes where: the proband into the background's child,
+and the proband's parents, where the case includes them, into the background's parents. From the background it reads the
+prepared reads, calls and phasing. It edits the reads at each placement, reprocesses them, and names each sample by its
+member id. The result is the instance's synthetic genomes, one per member of the case's family, and a build record that
+holds what reproduces the build.
+
+```mermaid
+flowchart LR
+    subgraph IN["Withheld inputs"]
+        direction TB
+        CASE["Case<br/>family · answer · bookkeeping"]
+        BG["Background<br/>prepared reads, calls and phasing of one trio"]
+    end
+
+    BUILD{{"build<br/>edit reads at each placement,<br/>reprocess, name samples by member id"}}
+
+    subgraph OUT["One case instance of a release"]
+        direction TB
+        FILES["synthetic genomes (open)<br/>CRAM and gVCF per member, joint calls, PED"]
+        INST["CaseInstance (withheld)<br/>id · case · background · pipeline version"]
+    end
+
+    CASE -- "placements" --> BUILD
+    CASE -- "family: who goes into the child and the parents" --> BUILD
+    BG -- "reads, calls, phasing" --> BUILD
+    BUILD --> FILES
+    BUILD --> INST
+
+    classDef default fill:#ffffff,stroke:#888888
+    style IN fill:#fcd9d9,stroke:#d9534f
+    style OUT fill:#eeeeee,stroke:#999999
+    style FILES fill:#d6e6fb,stroke:#4a86d4
+    style INST fill:#fcd9d9,stroke:#d9534f
+```
+
+The build record is withheld and not yet part of the schema. The release checks what the build relies on: the case's
+family goes no further than the proband and their parents, and the proband has the sex of the background's child, since
+the reads fix the karyotype.
 
 ## The case record
 
@@ -189,49 +244,39 @@ A case holds everything a laboratory knew and concluded about one family, and no
 placements name chromosome copies by their relation to the proband (the proband's paternal copy, the copy the father
 transmitted to her), and that is what lets one case be built into any background trio whose child has the proband's sex.
 
-The record has two sections because its fields go to two different readers. `open` holds the family and the clinical
-presentation, which a system under test receives. `answer` holds the placements and the diagnoses, which only the grader
-reads; placed variants that belong to no diagnosis are the candidates the laboratory set aside. The bookkeeping fields
-(source, provenance, sharing level and notes) are withheld as well. Adding a field to the record therefore means
-choosing a section, and the reviewer sees that choice in the diff. In a flat record the same decision would be hidden in
-whichever function copies fields to the open side, and a field nobody remembered to copy would go missing from the input
-without any error.
+The record has two parts because its fields go to two different readers. `family` holds the pedigree and each member's
+clinical presentation, and the system under test receives it exactly as recorded. `answer` holds the placements and the
+diagnoses, which only the grader reads; placed variants that belong to no diagnosis are the candidates the laboratory
+set aside. The bookkeeping fields (source, provenance, sharing level and notes) are withheld as well. Adding a field to
+the record therefore means choosing a part, and the reviewer sees that choice in the diff. A field added to `family`
+reaches the system under test with no further code; a field added anywhere else never does.
 
-`open` reaches the system under test in the same shape, keyed by release sample ids rather than the record's own member
-ids, and nothing derived from `answer` reaches it. The harness does read one such value, the cutoff: the earliest date
-any causative variant became public, before which it rolls back clinical-assertion databases and literature so that the
-answer cannot be looked up.
+Nothing derived from `answer` reaches the system under test. The harness does read one such value, the cutoff: the
+earliest date any causative variant became public, before which it rolls back clinical-assertion databases and
+literature so that the answer cannot be looked up.
 
 ## Case instances
 
 A case instance is one case built into one background, as issued in one release. It is the unit a system under test
-analyses, and the harness runs it under its id. It holds no case data of its own: it names the case and the background,
-and gives each member of the case's family the id it carries in this release. A release may contain several instances of
-one case in different backgrounds, which is how a result is checked for robustness to the background.
+analyses, and the harness runs it under its id. It holds no case data of its own: it names the case, the background and
+the pipeline version that built it. A release may contain several instances of one case in different backgrounds, which
+is how a result is checked for robustness to the background.
 
 The example below is the invented case 17 from the test fixture: an affected girl and her unaffected parents, built into
 two background trios in release 1.0.0. The proband goes into each background's child, so both backgrounds need a
-daughter, and the parents into its parents. Both case instances are withheld, like the case; the inputs at either edge
-are what the system under test sees. Each instance gives every member a fresh release sample id, so nothing it sees
-connects the two inputs, points back to the case, or names a background.
+daughter, and the parents into its parents. The family in the middle is what the system under test receives for either
+instance; which background each member was built into stays withheld.
 
 ```mermaid
 flowchart LR
-    subgraph O1["input of r1-07 (open)"]
-        direction TB
-        o1["r1-s-0412<br/>female, affected"]
-        o2["r1-s-1187<br/>male, unaffected"]
-        o3["r1-s-0093<br/>female, unaffected"]
-    end
-
     subgraph I1["instance r1-07 (withheld)"]
         direction TB
-        a1["bg-trio-a child<br/>as r1-s-0412"]
-        a2["bg-trio-a father<br/>as r1-s-1187"]
-        a3["bg-trio-a mother<br/>as r1-s-0093"]
+        a1["bg-trio-a child"]
+        a2["bg-trio-a father"]
+        a3["bg-trio-a mother"]
     end
 
-    subgraph REC["case-17 (withheld)"]
+    subgraph FAM["case-17 family (open)"]
         direction TB
         p["proband<br/>female, affected"]
         f["father<br/>male, unaffected"]
@@ -240,76 +285,57 @@ flowchart LR
 
     subgraph I2["instance r1-12 (withheld)"]
         direction TB
-        b1["bg-trio-b child<br/>as r1-s-0730"]
-        b2["bg-trio-b father<br/>as r1-s-0256"]
-        b3["bg-trio-b mother<br/>as r1-s-1461"]
+        b1["bg-trio-b child"]
+        b2["bg-trio-b father"]
+        b3["bg-trio-b mother"]
     end
 
-    subgraph O2["input of r1-12 (open)"]
-        direction TB
-        q1["r1-s-0730<br/>female, affected"]
-        q2["r1-s-0256<br/>male, unaffected"]
-        q3["r1-s-1461<br/>female, unaffected"]
-    end
-
-    o1 --- a1 --- p --- b1 --- q1
-    o2 --- a2 --- f --- b2 --- q2
-    o3 --- a3 --- m --- b3 --- q3
+    a1 --- p --- b1
+    a2 --- f --- b2
+    a3 --- m --- b3
 
     classDef default fill:#ffffff,stroke:#888888
-    style REC fill:#fcd9d9,stroke:#d9534f
+    style FAM fill:#d6e6fb,stroke:#4a86d4
     style I1 fill:#fcd9d9,stroke:#d9534f
     style I2 fill:#fcd9d9,stroke:#d9534f
-    style O1 fill:#d6e6fb,stroke:#4a86d4
-    style O2 fill:#d6e6fb,stroke:#4a86d4
 ```
 
-Each input carries the pedigree: the case's family with the ids replaced, so sex and affected status are recorded once,
-in the case. The instance column is for the reader; the system under test sees only the other five.
+Both instances carry the same PED file, and the files of each name their samples the same way:
 
-| Instance | Sample    | Father    | Mother    | Sex    | Affected |
-| -------- | --------- | --------- | --------- | ------ | -------- |
-| r1-07    | r1-s-0412 | r1-s-1187 | r1-s-0093 | female | yes      |
-| r1-07    | r1-s-1187 |           |           | male   | no       |
-| r1-07    | r1-s-0093 |           |           | female | no       |
-| r1-12    | r1-s-0730 | r1-s-0256 | r1-s-1461 | female | yes      |
-| r1-12    | r1-s-0256 |           |           | male   | no       |
-| r1-12    | r1-s-1461 |           |           | female | no       |
+| Sample  | Father | Mother | Sex    | Affected |
+| ------- | ------ | ------ | ------ | -------- |
+| proband | father | mother | female | yes      |
+| father  |        |        | male   | no       |
+| mother  |        |        | female | no       |
 
-A case recorded without parents builds into the same trio backgrounds and yields the proband's files only. The checks on
-a release reject an instance whose family goes beyond the proband and their parents, whose proband's sex differs from
-the background child's, or whose release sample ids contain the case id or the source accession.
+A case recorded without parents builds into the same trio backgrounds and yields the proband's files only.
 
-Two instances of one case carry the same clinical presentation and the same placed variants in different backgrounds. A
-harness that pooled a whole release could pair them and intersect their novel variants, which leaves little besides the
-placements, so each item has to be analysed in a session of its own. And because a case with more instances would
-otherwise weigh more, a result over such a release is best averaged per case first, with the spread across a case's
-instances reported beside it.
+Two instances of one case carry the same family and the same placed variants in different backgrounds. A harness that
+pooled a whole release could pair them and intersect their novel variants, which leaves little besides the placements,
+so each instance has to be analysed in a session of its own. And because a case with more instances would otherwise
+weigh more, a result over such a release is best averaged per case first, with the spread across a case's instances
+reported beside it.
 
-## From withheld to open
+## Running a release
 
-`blinding.open_view` is the only code that copies case data to the open side. It takes a case and one of its instances
-and returns the case's open section, re-keyed through the instance's member map; with the sequencing files, that is all
-the system under test sees. The harness reads the withheld side: for each case instance, `item.items` gives it the
-instance id it keys the submission and the trace by, the cutoff it rolls resources back to, and the open input it passes
-on. The grader reads the answer directly from the withheld side.
+For each case instance, `item.items` gives the harness an `Item`: the instance id, by which it keys the submission and
+the trace; the cutoff, to which it rolls resources back; and the input, which is the case's family. The harness passes
+the input and the sequencing files to the system under test, and nothing else. The grader reads the answer directly from
+the withheld side.
 
 ```mermaid
 flowchart LR
     subgraph W["Withheld: read by the harness and the grader"]
         direction TB
-        CASE["Case<br/>open · answer · bookkeeping"]
-        INST["CaseInstance<br/>case · background · pipeline version · member map"]
-        BG["Background"]
+        CASE["Case<br/>family · answer · bookkeeping"]
+        INST["CaseInstance<br/>case · background · pipeline version"]
         ITEM["Item<br/>id · cutoff · input"]
     end
 
-    OV{{"blinding.open_view(case, instance)"}}
-
     subgraph O["Open: seen by the system under test"]
         direction TB
-        INPUT["CaseOpen, re-keyed<br/>family · clinical presentation"]
-        FILES["sequencing files"]
+        FAM["Family<br/>pedigree · clinical presentation"]
+        FILES["synthetic genomes"]
     end
 
     subgraph G["Run and grade"]
@@ -319,13 +345,11 @@ flowchart LR
         GRADER["grader"]
     end
 
-    CASE -- "open section" --> OV
-    INST -- "member map" --> OV
-    BG -. "checked against the instance" .- INST
-    OV --> INPUT
-    ITEM -. "holds" .- INPUT
+    CASE -- "family" --> FAM
+    INST -. "case" .- CASE
+    ITEM -. "input" .- FAM
     ITEM -- "id, cutoff" --> HARNESS
-    INPUT --> SUT
+    FAM --> SUT
     FILES --> SUT
     HARNESS -- "resources rolled back to the cutoff" --> SUT
     SUT -- "submission" --> HARNESS
@@ -346,8 +370,7 @@ This assumes that every party running a harness also holds the release's withhel
 A party that ran a release without it, and sent its submissions elsewhere to be graded, would need the instance ids and
 cutoffs published separately. That would add a third tier between the two sides and change what a release ships.
 
-Three tests keep the boundary in place. Two walk every type reachable from `CaseOpen`, the only open data: one fails if
+Three tests keep the boundary in place. Two walk every type reachable from `Family`, the only open data: one fails if
 any of them is a `WithheldModel`, the other if a field is typed with a withheld id (`CaseId`, `BackgroundId` or
-`CaseInstanceId`). A withheld type or id placed on the open side therefore fails CI. The third serialises the open
-inputs of the fixture and fails if the case id, a record member id, a background id, an instance id, the cutoff or a
-placed position appears among their values.
+`CaseInstanceId`). A withheld type or id placed in the family therefore fails CI. The third serialises each item's input
+and fails if the case id, a background id, an instance id, the cutoff or a placed position appears among its values.

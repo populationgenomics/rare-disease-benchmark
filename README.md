@@ -20,8 +20,8 @@ different backgrounds, so that results can be checked for robustness to the back
 
 A **release** is a versioned set of case instances that never changes after it is issued. Everything in it is on the
 open side, which the system under test sees, or on the withheld side, which only the harness and the grader read. The
-schema makes the split structural: every model is declared open or withheld, and one function produces the open side
-from the withheld records.
+schema makes the split structural: every model is declared open or withheld, and the only open data a case holds is its
+family: the pedigree and each member's clinical presentation.
 
 ## Layout
 

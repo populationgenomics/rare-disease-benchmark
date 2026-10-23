@@ -1,10 +1,10 @@
 """The case record: what a curator writes for one solved case.
 
 A case names no background and holds no sequencing data, so it can be built into any background whose structure fits,
-as often as needed. It has two sections, and the split is the blinding boundary:
+as often as needed. It has two parts, and the split is the blinding boundary:
 
-- `open`: the family and the clinical presentation. This section, and only this section, reaches a system under test,
-  re-keyed to per-release sample ids by `blinding.open_view`.
+- `family`: the pedigree, with each member's clinical presentation. It is open: a system under test receives it as it
+  stands, and its member ids are the sample names in the released files.
 - `answer`: the placements and the diagnoses, which the grader compares a submission against.
 
 The remaining fields are bookkeeping and stay withheld, like `answer`.
@@ -28,18 +28,58 @@ type Sharing = Literal['internal', 'partners', 'public']
 
 _HPO_ID = re.compile(r'HP:\d{7}')
 
+# Relational labels such as proband, father, half_sister or sister_2. Member ids become the sample names in released
+# files, so the form keeps out accessions and other identifiers a source may use.
+_MEMBER_ID = re.compile(r'[a-z]+(_[a-z]+)*(_[0-9]+)?')
 
-# ---- open section ----
+
+# ---- open: the family ----
+
+
+class ClinicalPresentation(visibility.OpenModel, frozen=True):
+    """What the laboratory had for one member, at the level of detail the source holds."""
+
+    hpo_present: tuple[str, ...] = ()  # HPO ids
+    hpo_excluded: tuple[str, ...] = ()  # HPO ids
+    onset: str | None = None  # an HPO onset term or the source's wording. None: not recorded
+    age: str | None = None  # age or age bracket at referral. None: not recorded
+    panel: str | None = None  # the panel requested. None: none or not recorded
+    reason_for_referral: str | None = None  # None: not recorded
+    text: str | None = None  # referral letter, clinic notes or report text, de-identified. None: no free text
+
+    @pydantic.field_validator('hpo_present', 'hpo_excluded')
+    @classmethod
+    def _hpo_ids(cls, terms: tuple[str, ...]) -> tuple[str, ...]:
+        for term in terms:
+            if not _HPO_ID.fullmatch(term):
+                raise ValueError(f'{term!r} is not an HPO id of the form HP:0000000')
+        if len(set(terms)) != len(terms):
+            raise ValueError(f'repeated HPO ids: {terms}')
+        return terms
+
+    @pydantic.model_validator(mode='after')
+    def _check(self) -> Self:
+        if overlap := set(self.hpo_present) & set(self.hpo_excluded):
+            raise ValueError(f'HPO ids both present and excluded: {sorted(overlap)}')
+        return self
 
 
 class Individual(visibility.OpenModel, frozen=True):
-    """One PED row."""
+    """One PED row, with the member's clinical presentation."""
 
     id: ids.MemberId
     father: ids.MemberId | None = None  # None: not in the family
     mother: ids.MemberId | None = None  # None: not in the family
     sex: Sex  # unknown as PED permits, though not for the proband
     affected: bool | None = None  # None: unknown, as PED permits
+    presentation: ClinicalPresentation | None = None  # None: the source holds nothing for this member
+
+    @pydantic.field_validator('id')
+    @classmethod
+    def _relational_label(cls, member_id: ids.MemberId) -> ids.MemberId:
+        if not _MEMBER_ID.fullmatch(member_id):
+            raise ValueError(f'member id {member_id!r} is not a relational label such as proband, father or sister_2')
+        return member_id
 
 
 class Family(visibility.OpenModel, frozen=True):
@@ -94,52 +134,7 @@ class Family(visibility.OpenModel, frozen=True):
         return seen
 
 
-class ClinicalPresentation(visibility.OpenModel, frozen=True):
-    """What the laboratory had for one member, at the level of detail the source holds."""
-
-    individual: ids.MemberId
-    hpo_present: tuple[str, ...] = ()  # HPO ids
-    hpo_excluded: tuple[str, ...] = ()  # HPO ids
-    onset: str | None = None  # an HPO onset term or the source's wording. None: not recorded
-    age: str | None = None  # age or age bracket at referral. None: not recorded
-    panel: str | None = None  # the panel requested. None: none or not recorded
-    reason_for_referral: str | None = None  # None: not recorded
-    text: str | None = None  # referral letter, clinic notes or report text, de-identified. None: no free text
-
-    @pydantic.field_validator('hpo_present', 'hpo_excluded')
-    @classmethod
-    def _hpo_ids(cls, terms: tuple[str, ...]) -> tuple[str, ...]:
-        for term in terms:
-            if not _HPO_ID.fullmatch(term):
-                raise ValueError(f'{term!r} is not an HPO id of the form HP:0000000')
-        if len(set(terms)) != len(terms):
-            raise ValueError(f'repeated HPO ids: {terms}')
-        return terms
-
-    @pydantic.model_validator(mode='after')
-    def _check(self) -> Self:
-        if overlap := set(self.hpo_present) & set(self.hpo_excluded):
-            raise ValueError(f'HPO ids both present and excluded: {sorted(overlap)}')
-        return self
-
-
-class CaseOpen(visibility.OpenModel, frozen=True):
-    """The section of a case a system under test receives, after re-keying to per-release sample ids."""
-
-    family: Family
-    clinical_presentation: tuple[ClinicalPresentation, ...]  # one entry per member that has any
-
-    @pydantic.model_validator(mode='after')
-    def _check(self) -> Self:
-        presented = [p.individual for p in self.clinical_presentation]
-        if len(set(presented)) != len(presented):
-            raise ValueError(f'more than one clinical presentation for a member: {presented}')
-        for member_id in presented:
-            self.family.require_member(member_id, 'clinical presentation')
-        return self
-
-
-# ---- answer section ----
+# ---- withheld: the answer ----
 
 
 class Inheritance(enum.StrEnum):
@@ -222,19 +217,24 @@ class Source(visibility.WithheldModel, frozen=True):
 
 
 class Case(visibility.WithheldModel, frozen=True):
-    """The record of one solved case. Withheld as a whole; only `open` crosses, through `blinding.open_view`."""
+    """The record of one solved case. Withheld, except `family`, which a system under test receives as it stands."""
 
     id: ids.CaseId
     source: Source
     provenance: Provenance
     sharing: Sharing
     notes: str | None = None  # what made the case difficult. None: nothing to say
-    open: CaseOpen
+    family: Family
     answer: CaseAnswer
 
     @pydantic.model_validator(mode='after')
     def _check(self) -> Self:
-        family = self.open.family
+        family = self.family
+        revealing = [s for s in (self.id, self.source.accession) if s is not None]
+        for member in family.members:
+            for s in revealing:
+                if s.casefold() in member.id.casefold():
+                    raise ValueError(f'member id {member.id!r} contains {s!r}, and member ids are released')
         for placement in self.answer.placements:
             _check_placement(family, placement)
         for causative in self.answer.causative_variants:
