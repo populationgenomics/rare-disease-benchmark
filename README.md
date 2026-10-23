@@ -30,6 +30,8 @@ structural: every model is declared open or withheld, and one function produces 
 
 Each top-level folder is its own package under the `rare_disease_benchmark` namespace and installs on its own.
 
+[docs/schema.md](docs/schema.md) explains the schema, with diagrams.
+
 This repository holds code and configuration only. No case, background genome or withheld side of any release is
 committed, and the test fixtures are invented.
 
