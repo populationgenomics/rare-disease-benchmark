@@ -164,7 +164,8 @@ class Diagnosis(visibility.WithheldModel, frozen=True):
 class CaseAnswer(visibility.WithheldModel, frozen=True):
     """What the grader compares a submission against.
 
-    Placed variants that are not part of any diagnosis are the candidates the laboratory considered and set aside.
+    Variants placed in the proband that are not part of any diagnosis are the candidates the laboratory considered and
+    set aside.
     """
 
     placements: tuple[variant.Placement, ...]  # every variant in the case, once per copy per carrier
@@ -178,12 +179,6 @@ class CaseAnswer(visibility.WithheldModel, frozen=True):
     def causative_variants(self) -> Iterator[variant.Variant]:
         for diagnosis in self.diagnoses:
             yield from diagnosis.variants
-
-    @property
-    def set_aside(self) -> tuple[variant.Variant, ...]:
-        causative = list(self.causative_variants)
-        placed = dict.fromkeys(p.variant for p in self.placements)
-        return tuple(v for v in placed if v not in causative)
 
     @pydantic.model_validator(mode='after')
     def _check(self) -> Self:

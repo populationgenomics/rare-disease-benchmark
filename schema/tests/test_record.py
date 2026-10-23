@@ -6,7 +6,7 @@ import pydantic
 import pytest
 from edits import Change, changed, placement
 
-from rare_disease_benchmark.schema import record, release
+from rare_disease_benchmark.schema import record
 
 # Off chr1/chr2, so that a change never collides with case 17's own placements.
 X_SITE = 50_000_000  # chrX, outside both pseudoautosomal regions
@@ -28,14 +28,6 @@ def placements(case: dict[str, Any]) -> list[dict[str, Any]]:
 
 def as_son(case: dict[str, Any]) -> None:
     members(case)[0]['sex'] = 'male'
-
-
-def test_placed_variants_outside_every_diagnosis_are_set_aside(withheld: release.WithheldRelease) -> None:
-    answer = withheld.cases[0].answer
-    causative = set(answer.causative_variants)
-    assert answer.set_aside
-    assert not causative & set(answer.set_aside)
-    assert causative | set(answer.set_aside) == {p.variant for p in answer.placements}
 
 
 # Rows from the situations the record has to express; each is added to case 17 and must validate.

@@ -44,7 +44,6 @@ classDiagram
         placements: Placement[*]
         diagnoses: Diagnosis[1..*]
         cutoff: date?
-        set_aside() Variant[*]
     }
     class Placement {
         haplotype: Haplotype
@@ -232,10 +231,10 @@ same way.
 
 The record has two parts because its fields go to two different readers. `family` holds the pedigree and each member's
 clinical presentation, and the system under test receives it exactly as recorded. `answer` holds the placements and the
-diagnoses, which only the grader reads; placed variants that belong to no diagnosis are the candidates the laboratory
-set aside. The bookkeeping fields (source, provenance, sharing level and notes) are withheld as well. Adding a field to
-the record therefore means choosing a part, and the reviewer sees that choice in the diff. A field added to `family`
-reaches the system under test with no further code; a field added anywhere else never does.
+diagnoses, which only the grader reads; variants placed in the proband that belong to no diagnosis are the candidates
+the laboratory set aside. The bookkeeping fields (source, provenance, sharing level and notes) are withheld as well.
+Adding a field to the record therefore means choosing a part, and the reviewer sees that choice in the diff. A field
+added to `family` reaches the system under test with no further code; a field added anywhere else never does.
 
 Nothing derived from `answer` reaches the system under test. The harness does read one such value, the cutoff: the
 earliest date any causative variant became public, before which it rolls back clinical-assertion databases and
