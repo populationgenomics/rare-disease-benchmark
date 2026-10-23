@@ -20,9 +20,10 @@ stays cached after deletion.
   deliberately; put case fields in `Case.open` only if a system under test should receive them.
 - `blinding.py` is the only code that copies withheld data to the open side. Do not add another path.
 - A case names no background. What connects a case to a background is a `CaseInstance`.
-- The open side says nothing about how a case instance was built: no background, no pipeline version. No open model has
-  a field typed `CaseId` or `BackgroundId`.
-- Open ids (case instance ids, release sample ids) reveal nothing about the case and differ between instances.
+- Open means what the system under test sees: the case's open section, re-keyed, and the sequencing files. The harness
+  and the grader read the withheld side, which holds everything else, including the instance id, the cutoff and
+  everything about the build. No open model has a field typed `CaseId`, `BackgroundId` or `CaseInstanceId`.
+- Release sample ids, the only open ids, reveal nothing about the case and differ between instances.
 
 ## Working norms
 

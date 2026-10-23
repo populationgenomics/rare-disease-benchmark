@@ -1,8 +1,8 @@
 """Backgrounds, case instances, and the withheld side of a release.
 
 A case instance is one case built into one background, as issued in one release: the family's synthetic genomes, one
-per member, together with its pedigree and clinical presentation. Its id is the id of the item a system under test
-receives. A release may hold several instances of the same case, each in a different background, which is how results
+per member, together with its pedigree and clinical presentation. The harness runs it, and keys the submission, under
+its id. A release may hold several instances of the same case, each in a different background, which is how results
 are checked for robustness to the background.
 
 This module holds what connects an instance to its case, which is withheld. What a system under test receives is built
@@ -140,10 +140,10 @@ def _check_fits(case: record.Case, background: Background, instance: CaseInstanc
 
 
 def _check_opaque(case: record.Case, instance: CaseInstance) -> None:
-    """Reject open ids that would point a system under test at the case."""
+    """Reject release sample ids, the only open ids, that would point a system under test at the case."""
     revealing = [s for s in (case.id, case.source.accession) if s is not None]
     member_ids = {m.id for m in case.open.family.members}
-    for open_id in (instance.id, *(m.release_sample for m in instance.members)):
+    for open_id in (m.release_sample for m in instance.members):
         if open_id in member_ids:
             raise ValueError(f'open id {open_id!r} of case instance {instance.id!r} is a member id of the case record')
         for s in revealing:

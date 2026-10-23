@@ -193,8 +193,8 @@ class CaseAnswer(visibility.WithheldModel, frozen=True):
     def cutoff(self) -> dt.date | None:
         """The earliest date any causative variant became public; None if none is.
 
-        Rolling a system's resources back to before it hides every causative variant at once. This is the one value
-        derived from the answer that a system under test receives.
+        Rolling a system's resources back to before it hides every causative variant at once. The harness applies it;
+        the system under test never sees it, since it is the date a causative variant became public.
         """
         dates = [v.first_public_date for v in self.causative_variants if v.first_public_date is not None]
         return min(dates, default=None)

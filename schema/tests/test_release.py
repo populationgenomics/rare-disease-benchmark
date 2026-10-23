@@ -6,7 +6,7 @@ import pydantic
 import pytest
 from edits import Change, changed
 
-from rare_disease_benchmark.schema import blinding, release
+from rare_disease_benchmark.schema import item, release
 
 
 def instance(data: dict[str, Any], index: int) -> dict[str, Any]:
@@ -31,8 +31,8 @@ def test_a_case_may_have_several_instances_in_one_release(withheld: release.With
 
 def test_a_case_without_parents_builds_into_a_trio(release_data: dict[str, Any]) -> None:
     withheld = release.WithheldRelease.model_validate(changed(release_data, as_singleton))
-    for item in blinding.open_items(withheld):
-        assert len(item.input.family.members) == 1
+    for run in item.items(withheld):
+        assert len(run.input.family.members) == 1
 
 
 def add_sibling(data: dict[str, Any]) -> None:
@@ -60,7 +60,10 @@ REJECTED: dict[str, tuple[Change, str]] = {
         lambda d: instance(d, 0)['members'][0].update(release_sample='proband'),
         'member id of the case record',
     ),
-    'instance id containing the case id': (lambda d: instance(d, 0).update(id='r1-case-17'), "contains 'case-17'"),
+    'release sample id containing the case id': (
+        lambda d: instance(d, 0)['members'][0].update(release_sample='r1-case-17-p'),
+        "contains 'case-17'",
+    ),
     'release sample id containing the accession': (
         lambda d: (
             d['cases'][0]['source'].update(accession='ACC-981'),

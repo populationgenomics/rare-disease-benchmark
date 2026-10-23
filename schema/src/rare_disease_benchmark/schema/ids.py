@@ -12,7 +12,8 @@ type SampleId = str
 # instances of the same case.
 type ReleaseSampleId = str
 
-# Open: the id of one case instance in one release, which is also the id of the item a system under test receives.
+# Withheld: the id of one case instance in one release. The harness keys a submission and its trace by it; the system
+# under test never sees it.
 type CaseInstanceId = str
 
 # Withheld: the name of a background's catalogue entry. Only the build and the checks on a release use it; a system
