@@ -22,112 +22,115 @@ arrows a reference by id.
 classDiagram
     direction LR
 
-    namespace Withheld {
-        class WithheldRelease {
-            release: str
-            cases: Case[*]
-            backgrounds: Background[*]
-            instances: CaseInstance[*]
-        }
-        class Case {
-            id: CaseId
-            source: Source
-            provenance: real | derived | invented
-            sharing: internal | partners | public
-            notes: str?
-            family: Family
-            answer: CaseAnswer
-        }
-        class Source {
-            programme: str?
-            accession: str?
-        }
-        class CaseAnswer {
-            placements: Placement[*]
-            diagnoses: Diagnosis[1..*]
-            cutoff() date?
-            set_aside() Variant[*]
-        }
-        class Placement {
-            haplotype: Haplotype
-            variant: Variant
-            vaf: float?
-        }
-        class Haplotype {
-            individual: MemberId
-            name: HaplotypeName
-        }
-        class HaplotypeName {
-            <<enumeration>>
-            paternal
-            maternal
-            transmitted
-            non_transmitted
-        }
-        class Variant {
-            chrom: str
-            pos: int
-            ref: str
-            alt: str
-            end: int?
-            origin: Haplotype?
-        }
-        class Diagnosis {
-            disease: str
-            ontology_id: str?
-            inheritance: Inheritance
-            variants: CausativeVariant[1..*]
-            association_first_public_date: date?
-        }
-        class CausativeVariant {
-            variant: Variant
-            first_public_date: date?
-        }
-        class Inheritance {
-            <<enumeration>>
-            AD
-            AR
-            XLD
-            XLR
-            MT
-        }
-        class Background {
-            id: BackgroundId
-            child_sex: male | female
-        }
-        class CaseInstance {
-            id: CaseInstanceId
-            case: CaseId
-            background: BackgroundId
-            pipeline_version: str
-        }
-        class Item {
-            id: CaseInstanceId
-            cutoff: date?
-            input: Family
-        }
+    class LegendWithheld["Legend: withheld"] {
+        read by the harness and the grader
+    }
+    class LegendOpen["Legend: open"] {
+        seen by the system under test
     }
 
-    namespace Open {
-        class Family {
-            proband: MemberId
-            members: Individual[*]
-        }
-        class Individual {
-            id: MemberId
-            father: MemberId?
-            mother: MemberId?
-            sex: male | female | unknown
-            affected: bool?
-            presentation: ClinicalPresentation?
-        }
-        class ClinicalPresentation {
-            hpo_present: str[*]
-            hpo_excluded: str[*]
-            onset, age, panel: str?
-            reason_for_referral: str?
-            text: str?
-        }
+    class WithheldRelease {
+        release: str
+        cases: Case[*]
+        backgrounds: Background[*]
+        instances: CaseInstance[*]
+    }
+    class Case {
+        id: CaseId
+        source: Source
+        provenance: real | derived | invented
+        sharing: internal | partners | public
+        notes: str?
+        family: Family
+        answer: CaseAnswer
+    }
+    class Source {
+        programme: str?
+        accession: str?
+    }
+    class CaseAnswer {
+        placements: Placement[*]
+        diagnoses: Diagnosis[1..*]
+        cutoff() date?
+        set_aside() Variant[*]
+    }
+    class Placement {
+        haplotype: Haplotype
+        variant: Variant
+        vaf: float?
+    }
+    class Haplotype {
+        individual: MemberId
+        name: HaplotypeName
+    }
+    class HaplotypeName {
+        <<enumeration>>
+        paternal
+        maternal
+        transmitted
+        non_transmitted
+    }
+    class Variant {
+        chrom: str
+        pos: int
+        ref: str
+        alt: str
+        end: int?
+        origin: Haplotype?
+    }
+    class Diagnosis {
+        disease: str
+        ontology_id: str?
+        inheritance: Inheritance
+        variants: CausativeVariant[1..*]
+        association_first_public_date: date?
+    }
+    class CausativeVariant {
+        variant: Variant
+        first_public_date: date?
+    }
+    class Inheritance {
+        <<enumeration>>
+        AD
+        AR
+        XLD
+        XLR
+        MT
+    }
+    class Background {
+        id: BackgroundId
+        child_sex: male | female
+    }
+    class CaseInstance {
+        id: CaseInstanceId
+        case: CaseId
+        background: BackgroundId
+        pipeline_version: str
+    }
+    class Item {
+        id: CaseInstanceId
+        cutoff: date?
+        input: Family
+    }
+
+    class Family {
+        proband: MemberId
+        members: Individual[*]
+    }
+    class Individual {
+        id: MemberId
+        father: MemberId?
+        mother: MemberId?
+        sex: male | female | unknown
+        affected: bool?
+        presentation: ClinicalPresentation?
+    }
+    class ClinicalPresentation {
+        hpo_present: str[*]
+        hpo_excluded: str[*]
+        onset, age, panel: str?
+        reason_for_referral: str?
+        text: str?
     }
 
     WithheldRelease *-- Case : cases
@@ -151,6 +154,8 @@ classDiagram
     Individual *-- ClinicalPresentation : presentation
     Item *-- Family : input, the case's family
 
+    style LegendWithheld fill:#fcd9d9,stroke:#d9534f
+    style LegendOpen fill:#d6e6fb,stroke:#4a86d4
     style WithheldRelease fill:#fcd9d9,stroke:#d9534f
     style Case fill:#fcd9d9,stroke:#d9534f
     style Source fill:#fcd9d9,stroke:#d9534f
