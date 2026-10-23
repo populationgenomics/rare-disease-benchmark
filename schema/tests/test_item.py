@@ -87,6 +87,7 @@ def test_inputs_carry_nothing_withheld(withheld: release.WithheldRelease) -> Non
     }
     for p in case.answer.placements:
         forbidden |= {str(p.variant.pos), f'{p.variant.chrom}:{p.variant.pos}'}
+    forbidden |= {gene for d in case.answer.diagnoses for gene in d.genes}
     if case.answer.cutoff is not None:
         forbidden.add(case.answer.cutoff.isoformat())
     for run in item.items(withheld):

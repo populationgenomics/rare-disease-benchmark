@@ -27,6 +27,7 @@ type Provenance = Literal['real', 'derived', 'invented']
 type Sharing = Literal['internal', 'partners', 'public']
 
 _HPO_ID = re.compile(r'HP:\d{7}')
+_HGNC_ID = re.compile(r'HGNC:\d+')
 
 # Relational labels such as proband, father, half_sister or sister_2. Member ids become the sample names in released
 # files, so the form keeps out accessions and other identifiers a source may use.
@@ -155,12 +156,23 @@ class Diagnosis(visibility.WithheldModel, frozen=True):
     disease: str  # a label, compared by the grader
     ontology_id: str | None = None  # a MONDO or OMIM id where one fits. None: no fitting term
     inheritance: Inheritance
+    genes: tuple[str, ...] = pydantic.Field(min_length=1)  # HGNC ids of the genes the diagnosis implicates
     variants: tuple[CausativeVariant, ...] = pydantic.Field(min_length=1)
     # A compound heterozygote lists both variants; a homozygous variant is listed once, and its two placements show
     # both copies.
     association_first_public_date: dt.date | None = None
     # When the gene-disease association was first published; a case whose cutoff is not after it is a discovery case.
     # None: not known, and the case is not flagged.
+
+    @pydantic.field_validator('genes')
+    @classmethod
+    def _hgnc_ids(cls, genes: tuple[str, ...]) -> tuple[str, ...]:
+        for gene in genes:
+            if not _HGNC_ID.fullmatch(gene):
+                raise ValueError(f'{gene!r} is not an HGNC id of the form HGNC:1234')
+        if len(set(genes)) != len(genes):
+            raise ValueError(f'repeated HGNC ids: {genes}')
+        return genes
 
     @pydantic.model_validator(mode='after')
     def _check(self) -> Self:

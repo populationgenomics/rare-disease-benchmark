@@ -174,6 +174,8 @@ REJECTED: dict[str, tuple[Change, str]] = {
         lambda c: members(c)[0]['presentation'].update(hpo_present=['microcephaly']),
         'HPO id',
     ),
+    'malformed HGNC id': (lambda c: c['answer']['diagnoses'][0].update(genes=['ASPM']), 'HGNC id'),
+    'diagnosis without a gene': (lambda c: c['answer']['diagnoses'][0].update(genes=[]), 'at least 1 item'),
     'an unknown field': (lambda c: c['answer'].update(gene='ASPM'), 'Extra inputs'),
 }
 
