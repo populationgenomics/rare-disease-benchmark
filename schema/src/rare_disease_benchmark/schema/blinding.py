@@ -13,7 +13,8 @@ def open_view(case: record.Case, instance: release.CaseInstance, release_version
     """Build what a system under test receives for one case instance.
 
     The case's open section is copied with every sample id replaced by the instance's release sample id, and the
-    cutoff is the one value taken from the answer.
+    cutoff is the one value taken from the answer. Nothing about the build (the background, the pipeline version)
+    crosses.
 
     Raises:
         ValueError: If the instance is not an instance of this case.
@@ -26,8 +27,6 @@ def open_view(case: record.Case, instance: release.CaseInstance, release_version
         manifest=item.Manifest(
             id=instance.id,
             release=release_version,
-            background=instance.background,
-            pipeline_version=instance.pipeline_version,
             cutoff=case.answer.cutoff,
         ),
         input=record.CaseOpen(

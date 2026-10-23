@@ -47,7 +47,7 @@ class CaseInstance(visibility.WithheldModel, frozen=True):
 
     id: ids.CaseInstanceId
     case: ids.CaseId
-    background: ids.BackgroundId
+    background: ids.BackgroundId  # build-only, like pipeline_version
     pipeline_version: str
     members: tuple[InstanceMember, ...]  # every member of the case's family, once
 

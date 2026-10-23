@@ -6,8 +6,11 @@ instance. The types live in [`schema/`](../schema/src/rare_disease_benchmark/sch
 they fit together.
 
 Everything in a release is on one of two sides. The open side is what a system under test may see: the sequencing files,
-the pedigree, the clinical presentation and a manifest. The withheld side is everything else, above all the answer the
-grader compares a submission against. Most of the design follows from keeping that split hard to get wrong.
+the pedigree, the clinical presentation and a manifest with the release version and the cutoff. The withheld side is
+everything else. That includes the answer the grader compares a submission against, and also everything about how a case
+instance was built, such as which background family it went into and which pipeline version built it: the evaluation
+needs neither, and a background id would let a harness group the items built into the same family. Most of the design
+follows from keeping that split hard to get wrong.
 
 ## Overview
 
@@ -135,8 +138,6 @@ classDiagram
         class Manifest {
             id: CaseInstanceId
             release: str
-            background: BackgroundId
-            pipeline_version: str
             cutoff: date?
         }
     }
@@ -216,47 +217,61 @@ background.
 
 The example below is the invented case 17 from the test fixture: an affected girl and her unaffected parents, built into
 two background trios in release 1.0.0. The proband goes into each background's child, so both backgrounds need a
-daughter, and the parents into its parents. Each instance gives every member a fresh release sample id, so nothing on
-the open side connects the two items or points back to the case.
+daughter, and the parents into its parents. Both case instances are withheld, like the case; the items at either edge
+are what reaches the open side. Each instance gives every member a fresh release sample id, so nothing on the open side
+connects the two items, points back to the case, or names a background.
 
 ```mermaid
 flowchart LR
-    subgraph I1["case instance r1-07: built into bg-trio-a"]
+    subgraph O1["item r1-07 (open)"]
         direction TB
-        a1["r1-s-0412<br/>bg-trio-a child"]
-        a2["r1-s-1187<br/>bg-trio-a father"]
-        a3["r1-s-0093<br/>bg-trio-a mother"]
+        o1["r1-s-0412<br/>female, affected"]
+        o2["r1-s-1187<br/>male, unaffected"]
+        o3["r1-s-0093<br/>female, unaffected"]
     end
 
-    subgraph REC["case-17, withheld"]
+    subgraph I1["instance r1-07 (withheld)"]
+        direction TB
+        a1["bg-trio-a child<br/>as r1-s-0412"]
+        a2["bg-trio-a father<br/>as r1-s-1187"]
+        a3["bg-trio-a mother<br/>as r1-s-0093"]
+    end
+
+    subgraph REC["case-17 (withheld)"]
         direction TB
         p["proband<br/>female, affected"]
         f["father<br/>male, unaffected"]
         m["mother<br/>female, unaffected"]
     end
 
-    subgraph I2["case instance r1-12: built into bg-trio-b"]
+    subgraph I2["instance r1-12 (withheld)"]
         direction TB
-        b1["r1-s-0730<br/>bg-trio-b child"]
-        b2["r1-s-0256<br/>bg-trio-b father"]
-        b3["r1-s-1461<br/>bg-trio-b mother"]
+        b1["bg-trio-b child<br/>as r1-s-0730"]
+        b2["bg-trio-b father<br/>as r1-s-0256"]
+        b3["bg-trio-b mother<br/>as r1-s-1461"]
     end
 
-    a1 --- p
-    a2 --- f
-    a3 --- m
-    p --- b1
-    f --- b2
-    m --- b3
+    subgraph O2["item r1-12 (open)"]
+        direction TB
+        q1["r1-s-0730<br/>female, affected"]
+        q2["r1-s-0256<br/>male, unaffected"]
+        q3["r1-s-1461<br/>female, unaffected"]
+    end
+
+    o1 --- a1 --- p --- b1 --- q1
+    o2 --- a2 --- f --- b2 --- q2
+    o3 --- a3 --- m --- b3 --- q3
 
     classDef default fill:#ffffff,stroke:#888888
     style REC fill:#fcd9d9,stroke:#d9534f
-    style I1 fill:#d6e6fb,stroke:#4a86d4
-    style I2 fill:#d6e6fb,stroke:#4a86d4
+    style I1 fill:#fcd9d9,stroke:#d9534f
+    style I2 fill:#fcd9d9,stroke:#d9534f
+    style O1 fill:#d6e6fb,stroke:#4a86d4
+    style O2 fill:#d6e6fb,stroke:#4a86d4
 ```
 
-The pedigree each item carries is the case's family with the ids replaced, so sex and affected status are recorded once,
-in the case:
+The open side of each item carries the pedigree: the case's family with the ids replaced, so sex and affected status are
+recorded once, in the case.
 
 | Item  | Sample    | Father    | Mother    | Sex    | Affected |
 | ----- | --------- | --------- | --------- | ------ | -------- |
@@ -281,15 +296,16 @@ instances reported beside it.
 
 `blinding.open_view` is the only code that copies withheld data to the open side. It takes a case, one of its instances
 and the release version, and returns the item: the case's open section re-keyed through the instance's member map, and a
-manifest with the background, the pipeline version and the cutoff. The answer, the bookkeeping, the case id and the
-record's member ids never cross. The grader reads the answer directly from the withheld side.
+manifest with the instance id, the release version and the cutoff. The answer, the bookkeeping, the case id, the
+record's member ids and everything about the build (the background and the pipeline version) never cross. The grader
+reads the answer directly from the withheld side.
 
 ```mermaid
 flowchart LR
     subgraph W["Withheld"]
         direction TB
         CASE["Case<br/>open · answer · bookkeeping"]
-        INST["CaseInstance<br/>case · background · member map"]
+        INST["CaseInstance<br/>case · background · pipeline version · member map"]
         BG["Background"]
     end
 
@@ -298,7 +314,7 @@ flowchart LR
     subgraph O["Open"]
         direction TB
         ITEM["Item"]
-        MAN["Manifest<br/>id · release · background · pipeline version · cutoff"]
+        MAN["Manifest<br/>id · release · cutoff"]
         INPUT["CaseOpen, re-keyed<br/>family · clinical presentation"]
         ITEM --- MAN
         ITEM --- INPUT
@@ -312,7 +328,7 @@ flowchart LR
 
     CASE -- "open section" --> OV
     CASE -- "answer.cutoff" --> OV
-    INST -- "member map, background, pipeline version" --> OV
+    INST -- "id, member map" --> OV
     BG -. "checked against the instance" .- INST
     OV --> ITEM
     ITEM --> SUT
@@ -325,6 +341,7 @@ flowchart LR
     style G fill:#eeeeee,stroke:#999999
 ```
 
-Two tests keep this boundary in place. One walks every type reachable from `Item` and fails if any of them is a
-`WithheldModel`, so a withheld type placed in the open section fails CI. The other serialises the open items of the
-fixture and fails if the case id, a record member id or a placed position appears among their values.
+Three tests keep this boundary in place. Two walk every type reachable from `Item`: one fails if any of them is a
+`WithheldModel`, the other if a field is typed with a withheld id (`CaseId` or `BackgroundId`). A withheld type or id
+placed on the open side therefore fails CI. The third serialises the open items of the fixture and fails if the case id,
+a record member id, a background id or a placed position appears among their values.

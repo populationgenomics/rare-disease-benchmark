@@ -12,14 +12,21 @@ from rare_disease_benchmark.schema import blinding, ids, item, record, release, 
 _MODULES = (ids, item, record, release, variant, visibility)
 
 
-def reachable_models(root: type[pydantic.BaseModel]) -> set[type[pydantic.BaseModel]]:
-    """Every model type that can occur inside an instance of `root`, root included."""
-    seen: set[type[pydantic.BaseModel]] = set()
+# Id types that name something withheld. SampleId is not among them: the open section reuses it for the release
+# sample ids it carries after re-keying.
+_WITHHELD_IDS = (ids.CaseId, ids.BackgroundId)
+
+
+def reachable_types(root: type[pydantic.BaseModel]) -> set[object]:
+    """Every model type and type alias that can occur inside an instance of `root`, root included."""
+    seen: set[object] = set()
     stack: list[object] = [root]
     while stack:
         tp = stack.pop()
         if isinstance(tp, typing.TypeAliasType):
-            stack.append(tp.__value__)
+            if tp not in seen:
+                seen.add(tp)
+                stack.append(tp.__value__)
         elif isinstance(tp, type) and issubclass(tp, pydantic.BaseModel):
             if tp not in seen:
                 seen.add(tp)
@@ -27,6 +34,10 @@ def reachable_models(root: type[pydantic.BaseModel]) -> set[type[pydantic.BaseMo
         else:
             stack.extend(typing.get_args(tp))
     return seen
+
+
+def reachable_models(root: type[pydantic.BaseModel]) -> set[type[pydantic.BaseModel]]:
+    return {tp for tp in reachable_types(root) if isinstance(tp, type) and issubclass(tp, pydantic.BaseModel)}
 
 
 def strings(value: object) -> Iterator[str]:
@@ -58,15 +69,20 @@ def test_nothing_withheld_is_reachable_from_an_item() -> None:
     assert all(issubclass(m, visibility.OpenModel) for m in reachable_models(item.Item))
 
 
-def test_the_reachability_walk_finds_withheld_models() -> None:
-    # Guards the test above against passing vacuously.
+def test_no_withheld_id_type_is_reachable_from_an_item() -> None:
+    assert not set(_WITHHELD_IDS) & reachable_types(item.Item)
+
+
+def test_the_reachability_walk_finds_withheld_types() -> None:
+    # Guards the two tests above against passing vacuously.
     assert record.CaseAnswer in reachable_models(record.Case)
     assert variant.Haplotype in reachable_models(record.Case)
+    assert set(_WITHHELD_IDS) <= reachable_types(release.WithheldRelease)
 
 
-def test_open_items_carry_no_record_ids_or_answer(withheld: release.WithheldRelease) -> None:
+def test_open_items_carry_no_record_ids_answer_or_build(withheld: release.WithheldRelease) -> None:
     case = withheld.cases[0]
-    forbidden = {case.id, *(m.id for m in case.open.family.members)}
+    forbidden = {case.id, *(m.id for m in case.open.family.members), *(b.id for b in withheld.backgrounds)}
     for p in case.answer.placements:
         forbidden |= {str(p.variant.pos), f'{p.variant.chrom}:{p.variant.pos}'}
     for open_item in blinding.open_items(withheld):

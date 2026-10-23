@@ -8,12 +8,10 @@ from rare_disease_benchmark.schema import ids, record, visibility
 
 
 class Manifest(visibility.OpenModel, frozen=True):
-    """The open record of one case instance; it travels with the files."""
+    """The open record of one case instance; it travels with the files and says nothing about how they were built."""
 
     id: ids.CaseInstanceId
     release: str  # the release version; a result is always quoted against it
-    background: ids.BackgroundId
-    pipeline_version: str
     cutoff: dt.date | None  # the harness rolls clinical-assertion resources and literature back to before it
 
 
