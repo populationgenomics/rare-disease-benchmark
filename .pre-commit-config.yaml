@@ -1,0 +1,44 @@
+# lint.yml runs `pre-commit run --all-files`, so this config is the CI gate too: a hook added here is gated in CI with
+# no workflow edit. pytest stays a separate CI job (tests.yml).
+default_language_version:
+  python: python3.13
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: debug-statements
+      - id: check-added-large-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.1
+    hooks:
+      - id: ruff
+      - id: ruff-format
+
+  # pyright needs the workspace packages (pydantic) to resolve imports, so it runs in the lint env via `uv run`.
+  # Whole-project, so pass_filenames: false; fires on any staged .py.
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: uv run --group lint pyright
+        language: system
+        files: \.py$
+        pass_filenames: false
+
+  # CommonMark-strict, so intraword `_` in snake_case identifiers stays literal. Prose wrapped at 120.
+  - repo: https://github.com/hukkin/mdformat
+    rev: 1.0.0
+    hooks:
+      - id: mdformat
+        args: ["--wrap", "120"]
+        additional_dependencies:
+          - mdformat-gfm==1.0.0
