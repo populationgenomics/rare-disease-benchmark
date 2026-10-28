@@ -34,6 +34,19 @@ repos:
         files: \.py$
         pass_filenames: false
 
+  # Nextflow's own linter, which also formats (so a formatting change fails the commit, like ruff-format). It runs from
+  # the official image, so no local Nextflow or Java is needed; the image is amd64-only and runs emulated on Apple
+  # silicon. The image's Nextflow is readable by root only, hence -u root, which overrides pre-commit's own -u. Keep the
+  # version in step with build/nextflow.config and .github/workflows/build.yml.
+  - repo: local
+    hooks:
+      - id: nextflow-lint
+        name: nextflow lint
+        language: docker_image
+        entry: -u root nextflow/nextflow:26.10.2@sha256:8faf5c1ca30ed1f50d3802d365f07cf328765eccabcb288c575b87adaf50915d nextflow lint -format build
+        files: ^build/.*\.(nf|config)$
+        pass_filenames: false
+
   # CommonMark-strict, so intraword `_` in snake_case identifiers stays literal. Prose wrapped at 120.
   - repo: https://github.com/hukkin/mdformat
     rev: 1.0.0

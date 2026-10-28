@@ -1,0 +1,30 @@
+name: build
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, synchronize]
+  push:
+    branches: [main]
+
+jobs:
+  stub-run:
+    # Runs the build pipeline in stub mode: the wiring between processes, with no DRAGEN and no cloud. Linting is in the
+    # pre-commit config. The image is the one the nextflow-lint hook pins.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Stub run
+        run: |
+          mkdir -p stub/dragen-reference
+          touch stub/reference.fa stub/reference.fa.fai
+          docker run --rm -v "${PWD}:/src" -w /src/build \
+            nextflow/nextflow:26.10.2@sha256:8faf5c1ca30ed1f50d3802d365f07cf328765eccabcb288c575b87adaf50915d \
+            nextflow run main.nf -stub-run -profile stub \
+              --background stub \
+              --family slice/family.csv \
+              --regions slice/regions.bed \
+              --cram_reference /src/stub/reference.fa \
+              --dragen_reference /src/stub/dragen-reference \
+              --dragen_api_key_secret projects/stub/secrets/stub/versions/1
