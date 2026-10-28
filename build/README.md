@@ -33,6 +33,11 @@ nextflow run main.nf -profile google -c <stack>.site.config \
     --regions slice/regions.bed
 ```
 
+Adding `--dragen_metering_preview true` asks Illumina how each member's DRAGEN run would be billed instead of running
+it: DRAGEN prints the application, the tier and the features that put the run there, then exits without analysing
+anything or charging. The reports land in `metering-preview/` of the output directory. Run it before a new kind of run
+costs anything.
+
 `slice/` holds a 1000 Genomes trio and two regions of 2 Mb around the placed sites of the schema's test fixture, which
 is enough to exercise every step in minutes.
 

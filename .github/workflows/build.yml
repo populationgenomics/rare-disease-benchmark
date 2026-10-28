@@ -15,16 +15,19 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
-      - name: Stub run
+      - name: Stub run, then the metering preview
         run: |
           mkdir -p stub/dragen-reference
           touch stub/reference.fa stub/reference.fa.fai
-          docker run --rm -v "${PWD}:/src" -w /src/build \
-            nextflow/nextflow:26.10.2@sha256:8faf5c1ca30ed1f50d3802d365f07cf328765eccabcb288c575b87adaf50915d \
-            nextflow run main.nf -stub-run -profile stub \
-              --background stub \
-              --family slice/family.csv \
-              --regions slice/regions.bed \
-              --cram_reference /src/stub/reference.fa \
-              --dragen_reference /src/stub/dragen-reference \
-              --dragen_api_key_secret projects/stub/secrets/stub/versions/1
+          for preview in false true; do
+            docker run --rm -v "${PWD}:/src" -w /src/build \
+              nextflow/nextflow:26.10.2@sha256:8faf5c1ca30ed1f50d3802d365f07cf328765eccabcb288c575b87adaf50915d \
+              nextflow run main.nf -stub-run -profile stub \
+                --background stub \
+                --family slice/family.csv \
+                --regions slice/regions.bed \
+                --cram_reference /src/stub/reference.fa \
+                --dragen_reference /src/stub/dragen-reference \
+                --dragen_api_key_secret projects/stub/secrets/stub/versions/1 \
+                --dragen_metering_preview "${preview}"
+          done
