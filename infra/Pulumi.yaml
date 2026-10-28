@@ -1,0 +1,10 @@
+name: rare-disease-benchmark
+runtime:
+  name: python
+  options:
+    # The program's dependencies are the repo's uv environment (the `infra` dependency group); `uv sync --group infra`
+    # populates ../.venv before any pulumi command.
+    virtualenv: ../.venv
+description: Cloud infrastructure for running the build pipeline on Google Cloud Batch; one stack per deployment.
+# No `backend:` here: each deployment keeps its state in its own project's bucket, selected per command with
+# PULUMI_BACKEND_URL=gs://<project>-pulumi-state. See README.md.

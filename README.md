@@ -26,9 +26,11 @@ family, meaning the pedigree and each member's clinical presentation.
 
 ## Layout
 
-| Folder    | Contents                                                                       |
-| --------- | ------------------------------------------------------------------------------ |
-| `schema/` | The shared types: the case record, case instances, and what a system receives. |
+| Folder    | Contents                                                                                |
+| --------- | --------------------------------------------------------------------------------------- |
+| `schema/` | The shared types: the case record, case instances, and what a system receives.          |
+| `build/`  | The Nextflow pipeline that prepares backgrounds with DRAGEN and builds cases into them. |
+| `infra/`  | The Pulumi program for the cloud infrastructure the pipeline runs on.                   |
 
 Each top-level folder is its own package under the `rare_disease_benchmark` namespace and installs on its own.
 

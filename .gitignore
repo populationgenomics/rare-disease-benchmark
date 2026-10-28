@@ -8,10 +8,19 @@ __pycache__/
 # Virtual environments (uv creates .venv)
 .venv/
 
-# Build and packaging artefacts
-build/
-dist/
+# Build and packaging artefacts, inside each package folder. Anchored, so that the top-level build/ folder is tracked.
+/*/build/
+/*/dist/
 *.egg-info/
+
+# Nextflow run state and outputs
+.nextflow/
+.nextflow.log*
+work/
+results/
+
+# Nextflow site configs, generated from a Pulumi stack's outputs by infra/nextflow_site_config.py.
+*.site.config
 
 # Test coverage
 .coverage

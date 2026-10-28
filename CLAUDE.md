@@ -11,6 +11,9 @@ stays cached after deletion.
   datasets, systems, infrastructure (buckets, cloud projects, hosts), private repositories, documents or discussions.
   The schema takes such values as free-form data; they never appear as literals, enum members, examples, comments or
   test values.
+- The exception is a deployment's own configuration: `infra/Pulumi.<stack>.yaml` may name the deploying organisation's
+  cloud project, region and groups. Secret values in it are encrypted with the stack's KMS key, and it never names an
+  individual.
 - Give the reasoning in the text itself instead of pointing at a private document, thread or ticket.
 - When unsure whether something may be public, leave it out and ask.
 
