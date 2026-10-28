@@ -6,16 +6,16 @@ stack per deployment, each in its own GCP project. The same program serves every
 
 ## What it creates
 
-| Module                           | What                                                                                                                                              |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rare_disease_infra/baseline.py` | The enabled APIs, and the private Artifact Registry repository the DRAGEN image is pushed to.                                                     |
-| `rare_disease_infra/storage.py`  | The work bucket (Nextflow work directories, deleted after 30 days) and the data bucket (references, prepared backgrounds, outputs). Both private. |
-| `rare_disease_infra/network.py`  | A VPC without firewall rules, so nothing can reach the VMs, and its subnetwork. VMs reach out to Illumina's licence server.                       |
-| `rare_disease_infra/secrets.py`  | The DRAGEN API key in Secret Manager, from encrypted stack config.                                                                                |
-| `rare_disease_infra/grants.py`   | Every IAM grant, as a named capability whose docstring says what the holder can do.                                                               |
-| `__main__.py`                    | Reads the stack config, composes the above, creates the task VMs' service account and exports what the Nextflow config needs.                     |
-| `nextflow_site_config.py`        | Renders the build pipeline's Nextflow config for a stack from its outputs.                                                                        |
-| `bootstrap/bootstrap.sh`         | One-time setup of what Pulumi itself needs: the state bucket and the KMS key.                                                                     |
+| Module                           | What                                                                                                                                                                                                 |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rare_disease_infra/baseline.py` | The enabled APIs, and the private Artifact Registry repository the DRAGEN image is pushed to.                                                                                                        |
+| `rare_disease_infra/storage.py`  | The work bucket (Nextflow work directories, deleted after 30 days), the data bucket (references, prepared backgrounds, outputs) and the versioned vendor bucket (the DRAGEN installer). All private. |
+| `rare_disease_infra/network.py`  | A VPC without firewall rules, so nothing can reach the VMs, and its subnetwork. VMs reach out to Illumina's licence server.                                                                          |
+| `rare_disease_infra/secrets.py`  | The DRAGEN API key in Secret Manager, from encrypted stack config.                                                                                                                                   |
+| `rare_disease_infra/grants.py`   | Every IAM grant, as a named capability whose docstring says what the holder can do.                                                                                                                  |
+| `__main__.py`                    | Reads the stack config, composes the above, creates the task VMs' service account and exports what the Nextflow config needs.                                                                        |
+| `nextflow_site_config.py`        | Renders the build pipeline's Nextflow config for a stack from its outputs.                                                                                                                           |
+| `bootstrap/bootstrap.sh`         | One-time setup of what Pulumi itself needs: the state bucket and the KMS key.                                                                                                                        |
 
 The task VMs run as `pipeline-tasks@<project>`, which can report to Batch, write logs, pull images, use both buckets and
 read the DRAGEN key. The groups in `pipelineLaunchers` can start Batch jobs as that account, follow their logs, use the

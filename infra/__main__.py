@@ -31,6 +31,8 @@ buckets = {
     'work': storage.work_bucket(project=project, region=region, opts=after_services),
     'data': storage.data_bucket(project=project, region=region, opts=after_services),
 }
+# Read by the image build only; nobody else is granted on it (an owner uploads the installer).
+vendor = storage.vendor_bucket(project=project, region=region, opts=after_services)
 pipeline_network = network.Network(project=project, region=region, opts=after_services)
 dragen_key = secrets.dragen_api_key(project=project, region=region, api_key=dragen_api_key, opts=after_services)
 
@@ -59,6 +61,7 @@ pulumi.export('region', region)
 pulumi.export('workDir', buckets['work'].name.apply(lambda name: f'gs://{name}/work'))
 pulumi.export('outputDir', buckets['data'].name.apply(lambda name: f'gs://{name}/results'))
 pulumi.export('dataBucket', buckets['data'].name.apply(lambda name: f'gs://{name}'))
+pulumi.export('vendorBucket', vendor.name.apply(lambda name: f'gs://{name}'))
 pulumi.export('network', pipeline_network.network.id)
 pulumi.export('subnetwork', pipeline_network.subnetwork.id)
 pulumi.export('serviceAccountEmail', task_account.email)
