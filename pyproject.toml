@@ -14,15 +14,16 @@ package = false
 exclude-newer = "7 days"
 
 [tool.uv.workspace]
-members = ["schema"]
+members = ["schema", "adapters/metamist"]
 
 [tool.uv.sources]
 rare-disease-benchmark-schema = { workspace = true }
+rare-disease-benchmark-metamist = { workspace = true }
 
 [dependency-groups]
 # infra: the Pulumi program in infra/ (not a package; Pulumi runs it from this environment).
 infra = ["pulumi", "pulumi-gcp", "pyyaml"]
-test = ["pytest", "rare-disease-benchmark-schema", { include-group = "infra" }]
+test = ["pytest", "rare-disease-benchmark-schema", "rare-disease-benchmark-metamist", { include-group = "infra" }]
 lint = ["pre-commit", "ruff", "pyright", "types-pyyaml", { include-group = "test" }]
 
 [tool.ruff]
@@ -81,14 +82,14 @@ max-locals = 25
 
 [tool.pyright]
 pythonVersion = "3.13"
-include = ["schema", "infra"]
+include = ["schema", "infra", "adapters"]
 # The Pulumi program imports its package from infra/, and the tests their helpers from the test folders.
 extraPaths = ["infra", "infra/tests", "schema/tests"]
 typeCheckingMode = "standard"
 reportImplicitOverride = "error"
 
 [tool.pytest.ini_options]
-testpaths = ["schema/tests", "infra/tests"]
+testpaths = ["schema/tests", "infra/tests", "adapters/metamist/tests"]
 # Shared test helpers (schema/tests/edits.py, infra/tests/mocked_program.py) are imported by name, and the Pulumi
 # program's package from infra/.
 pythonpath = ["schema/tests", "infra/tests", "infra"]

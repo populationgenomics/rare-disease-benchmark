@@ -1,0 +1,17 @@
+[project]
+name = "rare-disease-benchmark-metamist"
+version = "0.1.0"
+description = "Adapters between the rare-disease benchmark's build pipeline and Metamist: sample sheets from it, outputs into it."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.13"
+dependencies = [
+    "metamist>=7.14.3",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "rare_disease_benchmark.metamist"
