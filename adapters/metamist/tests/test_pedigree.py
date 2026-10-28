@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import fakes
 import pytest
 
 from rare_disease_benchmark.metamist import pedigree, records
-
-from . import fakes
 
 # Invented rows in the two layouts of the public 1000 Genomes pedigrees: tab-separated with a header of spaced names and
 # extra columns, and space-separated with a header and population columns in place of the phenotype.

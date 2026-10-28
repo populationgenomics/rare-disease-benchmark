@@ -4,12 +4,11 @@ import io
 import json
 from typing import Any
 
+import fakes
 import metamist.graphql
 import pytest
 
 from rare_disease_benchmark.metamist import client, lookup, pedigree, records
-
-from . import fakes
 
 NEW = records.NewParticipant(
     external_id=fakes.CHILD,

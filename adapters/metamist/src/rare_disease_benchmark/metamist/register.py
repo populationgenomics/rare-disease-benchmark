@@ -31,18 +31,15 @@ Writes go through `Writer`; `--dry-run` swaps in one that prints each request in
 
 from __future__ import annotations
 
-import argparse
 import json
-import pathlib
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, Protocol, cast
-
-import google.cloud.storage
-import pydantic
 
 import metamist.apis
 import metamist.graphql
 import metamist.models
+import pydantic
+
 from rare_disease_benchmark.metamist import manifest
 
 CRAM = 'cram'
@@ -257,35 +254,6 @@ def _sizes(run: manifest.Manifest, storage: Storage) -> dict[str, int]:
     return sizes
 
 
-class CloudStorage:
-    """Local files, and objects on GCS under the user's Google credentials."""
-
-    def __init__(self) -> None:
-        self._client: google.cloud.storage.Client | None = None
-
-    def read_text(self, location: str) -> str:
-        if location.startswith('gs://'):
-            return self._blob(location).download_as_text()
-        return pathlib.Path(location).read_text('utf-8')
-
-    def size(self, location: str) -> int:
-        if location.startswith('gs://'):
-            size = self._blob(location).size
-            if size is None:
-                raise ValueError(f'GCS reports no size for {location}')
-            return size
-        return pathlib.Path(location).stat().st_size
-
-    def _blob(self, location: str) -> google.cloud.storage.Blob:
-        if self._client is None:
-            self._client = google.cloud.storage.Client()
-        bucket, _, name = location.removeprefix('gs://').partition('/')
-        blob = self._client.bucket(bucket).get_blob(name)
-        if blob is None:
-            raise FileNotFoundError(location)
-        return blob
-
-
 _PROJECT_QUERY = """
 query RegisterProject($project: String!, $types: [String!]!) {
   enum {
@@ -390,27 +358,3 @@ def _request(analysis: NewAnalysis) -> metamist.models.Analysis:
         meta=dict(analysis.meta),
     )
     return cast(metamist.models.Analysis, request)
-
-
-def main(argv: Sequence[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(
-        prog='python -m rare_disease_benchmark.metamist.register',
-        description="Registers a build run's outputs in Metamist as analyses.",
-    )
-    parser.add_argument('directory', help="the run's manifest directory, local or gs://")
-    parser.add_argument('--project', required=True, help='the Metamist project holding the sequencing groups')
-    parser.add_argument('--pipeline-version', required=True, help='the pipeline version that wrote the run')
-    parser.add_argument('--dry-run', action='store_true', help='print the requests instead of sending them')
-    args = parser.parse_args(argv)
-    register(
-        args.directory,
-        args.project,
-        args.pipeline_version,
-        storage=CloudStorage(),
-        reader=GraphQLReader(),
-        writer=DryRunWriter() if args.dry_run else ApiWriter(),
-    )
-
-
-if __name__ == '__main__':
-    main()

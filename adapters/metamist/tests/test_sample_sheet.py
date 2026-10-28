@@ -5,11 +5,10 @@ import io
 import pathlib
 from collections.abc import Callable
 
+import fakes
 import pytest
 
 from rare_disease_benchmark.metamist import records, sample_sheet
-
-from . import fakes
 
 GROUPS = {fakes.MOTHER: 'SGT1', fakes.FATHER: 'SGT2', fakes.CHILD: 'SGT3'}
 _MAIN_NF = pathlib.Path(__file__).parents[3] / 'build' / 'main.nf'

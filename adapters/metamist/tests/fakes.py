@@ -110,8 +110,8 @@ class FakeStorage:
     def __init__(self, *urls: str) -> None:
         self.urls = set(urls)
 
-    def is_file(self, url: str) -> bool:
-        return url in self.urls
+    def is_file(self, location: str) -> bool:
+        return location in self.urls
 
 
 def storage_with_source_crams(*groups: str) -> FakeStorage:

@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 
+import fakes
 import pytest
 
 from rare_disease_benchmark.metamist import ingest, records, sample_sheet
-
-from . import fakes
 
 SOURCE_GROUPS = {fakes.MOTHER: 'SGX1', fakes.FATHER: 'SGX2', fakes.CHILD: 'SGX3'}
 

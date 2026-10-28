@@ -69,6 +69,8 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = ["rare_disease_benchmark", "rare_disease_infra"]
+# Inside rare_disease_benchmark.metamist, isort would otherwise take the metamist client for this package.
+known-third-party = ["metamist"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 20
@@ -84,15 +86,15 @@ max-locals = 25
 pythonVersion = "3.13"
 include = ["schema", "infra", "adapters"]
 # The Pulumi program imports its package from infra/, and the tests their helpers from the test folders.
-extraPaths = ["infra", "infra/tests", "schema/tests"]
+extraPaths = ["infra", "infra/tests", "schema/tests", "adapters/metamist/tests"]
 typeCheckingMode = "standard"
 reportImplicitOverride = "error"
 
 [tool.pytest.ini_options]
 testpaths = ["schema/tests", "infra/tests", "adapters/metamist/tests"]
-# Shared test helpers (schema/tests/edits.py, infra/tests/mocked_program.py) are imported by name, and the Pulumi
-# program's package from infra/.
-pythonpath = ["schema/tests", "infra/tests", "infra"]
+# Shared test helpers (schema/tests/edits.py, infra/tests/mocked_program.py, adapters/metamist/tests/fakes.py) are
+# imported by name, and the Pulumi program's package from infra/.
+pythonpath = ["schema/tests", "infra/tests", "adapters/metamist/tests", "infra"]
 # importlib: test modules in different folders may share a basename. strict-markers: a misspelled marker is a
 # collection error rather than a warning, so it cannot silently deselect tests.
 addopts = ["--import-mode=importlib", "--strict-markers"]

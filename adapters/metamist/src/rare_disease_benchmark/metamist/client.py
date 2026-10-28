@@ -14,11 +14,10 @@ import tempfile
 from collections.abc import Collection, Mapping
 from typing import Any, TextIO
 
-import cloudpathlib
-
 import metamist.apis
 import metamist.graphql
 import metamist.models
+
 from rare_disease_benchmark.metamist import records
 
 # Metamist keys a record's external ids by the organisation that issued them; this is the key of the primary one.
@@ -134,11 +133,6 @@ class DryRunWriter:
             file=self._out,
         )
         print(ped_text(family, members), end='', file=self._out)
-
-
-class CloudStorage:
-    def is_file(self, url: str) -> bool:
-        return cloudpathlib.AnyPath(url).is_file()
 
 
 def participant_upserts(participants: tuple[records.NewParticipant, ...]) -> list[Any]:
