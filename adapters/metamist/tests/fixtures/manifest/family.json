@@ -1,0 +1,11 @@
+[
+  {
+    "id": "trio-a",
+    "vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a.hard-filtered.vcf.gz",
+    "vcf_index": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a.hard-filtered.vcf.gz.tbi",
+    "pedigree": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a.ped",
+    "other": [
+      "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a.vc_metrics.csv"
+    ]
+  }
+]
