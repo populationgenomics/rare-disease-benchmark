@@ -6,7 +6,9 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.13"
 dependencies = [
+    "google-cloud-storage>=3.17.1",
     "metamist>=7.14.3",
+    "pydantic>=2.11",
 ]
 
 [build-system]
