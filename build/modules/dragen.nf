@@ -13,7 +13,8 @@ def minMemoryGb(task) {
 // restricts small variant calling and its coverage reports to its regions; without one, the whole genome is called.
 def germlineCommand(task, sample, sex, cram, cram_reference, ref_dir, target_bed) {
     // DRAGEN discards the CRAM's alignments and duplicate flags and maps the reads afresh, keeping their read groups;
-    // --cram-reference decodes the CRAM, which was compressed against a different FASTA. The sex comes from the
+    // --cram-reference decodes the CRAM, which was compressed against a different FASTA (DRAGEN warns that it is not
+    // used for the output CRAM, which it always compresses against the hash table's reference). The sex comes from the
     // pedigree: on a few megabases of reads DRAGEN's ploidy estimator has too little coverage to infer it.
     def args = [
         '--sw-mode',
