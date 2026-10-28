@@ -18,10 +18,16 @@ params {
     dragen_reference: Path
     // Secret Manager secret version holding the DRAGEN API key: projects/<project>/secrets/<secret>/versions/<version>.
     dragen_api_key_secret: String
+    // The DRAGEN image, in the deployment's private registry.
+    dragen_container: String
+    // Where the outputs are published; nextflow.config reads it, since a Seqera launch can only set it through params.
+    output_dir: String?
     // Instead of analysing, ask Illumina how each member's DRAGEN run would be billed, at no charge.
     dragen_metering_preview: Boolean = false
     // Pass the regions to DRAGEN as its target BED, restricting small variant calling to them.
     dragen_target_regions: Boolean = false
+    // Set by the analysis-runner on every launch; undeclared, it would fail the run.
+    arGuid: String?
 }
 
 workflow {

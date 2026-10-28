@@ -29,5 +29,6 @@ jobs:
                 --cram_reference /src/stub/reference.fa \
                 --dragen_reference /src/stub/dragen-reference \
                 --dragen_api_key_secret projects/stub/secrets/stub/versions/1 \
+                --dragen_container stub \
                 --dragen_metering_preview "${preview}"
           done

@@ -3,9 +3,9 @@ from __future__ import annotations
 import base64
 
 import references
-import test_nextflow_site_config
+import test_pipeline_config
 
-OUTPUTS = test_nextflow_site_config.OUTPUTS
+OUTPUTS = test_pipeline_config.OUTPUTS
 
 
 def test_the_fetch_job_runs_in_the_stack() -> None:

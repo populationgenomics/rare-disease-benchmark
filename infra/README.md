@@ -16,7 +16,7 @@ stack per deployment, each in its own GCP project. The same program serves every
 | `__main__.py`                    | Reads the stack config, composes the above, creates the task VMs' service account and exports what the Nextflow config needs.                                                                        |
 | `references.py`                  | Puts the pipeline's references into a stack's data bucket (`fetch`) and checks them against their published checksums (`verify`).                                                                    |
 | `stack_outputs.py`               | Reads a stack's outputs, for the two tools.                                                                                                                                                          |
-| `nextflow_site_config.py`        | Renders the build pipeline's Nextflow config for a stack from its outputs.                                                                                                                           |
+| `pipeline_config.py`             | Renders the build pipeline's params and workstation site config for a stack from its outputs.                                                                                                        |
 | `bootstrap/bootstrap.sh`         | One-time setup of what Pulumi itself needs: the state bucket and the KMS key.                                                                                                                        |
 
 The task VMs run as `pipeline-tasks@<project>`, which can report to Batch, write logs, pull images, use both buckets and
@@ -48,9 +48,9 @@ with the DRAGEN key.
    `fetch` copies GRCh38 from Broad's public bucket within GCS, and streams Illumina's DRAGEN hash table into the bucket
    from a Cloud Batch job, so neither passes through the machine it runs on. Running it again finishes an interrupted
    fetch: files already in the bucket are skipped.
-1. Generate the pipeline's Nextflow config from the stack's outputs:
-   `uv run --group infra python infra/nextflow_site_config.py --stack <stack> --dragen-image-tag <tag>`, which writes
-   `build/<stack>.site.config` (ignored by git).
+1. Generate the pipeline's params (`build/<stack>.params.yaml`) and workstation site config
+   (`build/<stack>.site.config`), both ignored by git, from the stack's outputs:
+   `uv run --group infra python infra/pipeline_config.py --stack <stack> --dragen-image-tag <tag>`.
 
 `pipelineLaunchers` names groups only: the stack config is public, and the program rejects any other kind of member.
 

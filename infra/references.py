@@ -22,7 +22,7 @@ from collections.abc import Mapping, Sequence
 
 import stack_outputs
 
-# Where the references sit in a data bucket; the pipeline's site config points at these paths.
+# Where the references sit in a data bucket; the pipeline's params point at these paths (pipeline_config.py).
 DRAGEN_REFERENCE = 'references/dragen/hg38-alt_masked.cnv.graph.hla.methyl_cg.rna-12-r6.0-1'
 CRAM_REFERENCE = 'references/grch38/Homo_sapiens_assembly38.fasta'
 

@@ -55,7 +55,7 @@ for launcher in launchers:
     grants.UsesBuckets(f'{label}-buckets', buckets=buckets, member=launcher)
     grants.PushesImages(f'{label}-images', registry=base.registry, member=launcher)
 
-# What the build pipeline's Nextflow config needs; nextflow_site_config.py renders it from these.
+# What the build pipeline needs to run against this stack; pipeline_config.py renders its params and site config.
 pulumi.export('project', project)
 pulumi.export('region', region)
 pulumi.export('workDir', buckets['work'].name.apply(lambda name: f'gs://{name}/work'))
