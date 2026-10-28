@@ -45,10 +45,11 @@ is enough to exercise every step in minutes.
 
 ## Memory
 
-DRAGEN Software Mode refuses to start with less than 120 GB of memory unless `--min-memory` lowers the gate. Memory use
-is set mostly by the reference's hash table, which is loaded whole whatever the size of the input, so a regional run
-needs less than a whole genome but not proportionally less. The DRAGEN processes ask for 60 GB on an 8-vCPU highmem VM
-and lower the gate to match; this is to be measured on the first runs.
+DRAGEN Software Mode refuses to start with less than 120 GB of memory unless `--min-memory` lowers the gate, and its
+memory use is set by the reference rather than the input: on a 64 GB VM it ran out on a few megabases of reads, having
+loaded the hash table and sized its sort buffers for a whole genome. The DRAGEN processes therefore run on 16-vCPU
+highmem VMs (128 GB, which Illumina recommends even for panels and low-pass genomes), ask for 120 GB and lower the gate
+to match.
 
 ## Checks
 

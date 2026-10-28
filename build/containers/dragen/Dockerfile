@@ -9,7 +9,8 @@
 # RHEL 9-compatible, which DRAGEN 4.6 supports alongside RHEL 8 and which is maintained for longer.
 FROM almalinux:9.8-20261002@sha256:9819dc675b67b595c2b59e42be7763fca1a8bb217fa5944e04daa22e9a64db16
 
-RUN dnf install -q -y jq && dnf clean all
+# procps-ng: DRAGEN's crash diagnostics call ps.
+RUN dnf install -q -y jq procps-ng && dnf clean all
 
 # The installer extracts into a directory named after itself inside the target; moving that one directory to a fixed
 # path keeps PATH independent of the version, and fails the build if a future installer creates more than one.
