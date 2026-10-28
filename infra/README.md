@@ -14,6 +14,8 @@ stack per deployment, each in its own GCP project. The same program serves every
 | `rare_disease_infra/secrets.py`  | The DRAGEN API key in Secret Manager, from encrypted stack config.                                                                                                                                   |
 | `rare_disease_infra/grants.py`   | Every IAM grant, as a named capability whose docstring says what the holder can do.                                                                                                                  |
 | `__main__.py`                    | Reads the stack config, composes the above, creates the task VMs' service account and exports what the Nextflow config needs.                                                                        |
+| `references.py`                  | Puts the pipeline's references into a stack's data bucket (`fetch`) and checks them against their published checksums (`verify`).                                                                    |
+| `stack_outputs.py`               | Reads a stack's outputs, for the two tools.                                                                                                                                                          |
 | `nextflow_site_config.py`        | Renders the build pipeline's Nextflow config for a stack from its outputs.                                                                                                                           |
 | `bootstrap/bootstrap.sh`         | One-time setup of what Pulumi itself needs: the state bucket and the KMS key.                                                                                                                        |
 
@@ -38,7 +40,14 @@ with the DRAGEN key.
    `PULUMI_BACKEND_URL` selects the state bucket for these commands only; `pulumi login` would switch the backend for
    every Pulumi project on the machine.
 1. Build the DRAGEN image (`build/containers/dragen/Dockerfile`) and push it under the `imagePrefix` output.
-1. Copy the DRAGEN hash table and the 1000 Genomes FASTA into the data bucket (`build/README.md`).
+1. Put the pipeline's references into the data bucket, and check them once the Batch job it submits has finished:
+   ```sh
+   uv run --group infra python infra/references.py --stack <stack> fetch
+   uv run --group infra python infra/references.py --stack <stack> verify
+   ```
+   `fetch` copies GRCh38 from Broad's public bucket within GCS, and streams Illumina's DRAGEN hash table into the bucket
+   from a Cloud Batch job, so neither passes through the machine it runs on. Running it again finishes an interrupted
+   fetch: files already in the bucket are skipped.
 1. Generate the pipeline's Nextflow config from the stack's outputs:
    `uv run --group infra python infra/nextflow_site_config.py --stack <stack> --dragen-image-tag <tag>`, which writes
    `build/<stack>.site.config` (ignored by git).

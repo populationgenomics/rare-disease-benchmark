@@ -9,18 +9,15 @@ Run it again after `pulumi up` changes an output, or to switch the DRAGEN image.
 from __future__ import annotations
 
 import argparse
-import json
 import pathlib
 import re
-import subprocess
 from collections.abc import Mapping
+
+import references
+import stack_outputs
 
 _INFRA = pathlib.Path(__file__).resolve().parent
 _BUILD = _INFRA.parent / 'build'
-
-# Where the references sit in the data bucket; build/README.md says how to put them there.
-DRAGEN_REFERENCE = 'references/dragen/hg38-alt_masked.cnv.graph.hla.methyl_cg.rna-12-r6.0-1'
-CRAM_REFERENCE = 'references/grch38/Homo_sapiens_assembly38.fasta'
 
 REQUIRED_OUTPUTS = (
     'project',
@@ -47,8 +44,7 @@ def _quoted(value: str) -> str:
 
 def render(outputs: Mapping[str, str], *, stack: str, dragen_image_tag: str) -> str:
     """The Nextflow config for a stack with the given outputs."""
-    if missing := [key for key in REQUIRED_OUTPUTS if not outputs.get(key)]:
-        raise ValueError(f'stack {stack} lacks outputs {missing}; has `pulumi up` run?')
+    stack_outputs.require(outputs, REQUIRED_OUTPUTS, stack=stack)
     if not _TAG.fullmatch(dragen_image_tag):
         raise ValueError(f'{dragen_image_tag!r} is not a valid image tag')
     data = outputs['dataBucket']
@@ -75,22 +71,11 @@ process {{
 }}
 
 params {{
-    dragen_reference = {_quoted(f'{data}/{DRAGEN_REFERENCE}')}
-    cram_reference = {_quoted(f'{data}/{CRAM_REFERENCE}')}
+    dragen_reference = {_quoted(f'{data}/{references.DRAGEN_REFERENCE}')}
+    cram_reference = {_quoted(f'{data}/{references.CRAM_REFERENCE}')}
     dragen_api_key_secret = {_quoted(outputs['dragenApiKeySecret'])}
 }}
 """
-
-
-def _stack_outputs(stack: str) -> dict[str, str]:
-    result = subprocess.run(  # noqa: S603 (fixed arguments; the stack name is a single argv entry)
-        ['pulumi', 'stack', 'output', '--json', '--stack', stack],  # noqa: S607 (pulumi is resolved from PATH)
-        cwd=_INFRA,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return json.loads(result.stdout)
 
 
 def main() -> None:
@@ -99,7 +84,7 @@ def main() -> None:
     parser.add_argument('--dragen-image-tag', required=True, help='the tag the DRAGEN image was pushed under')
     args = parser.parse_args()
     target = _BUILD / f'{args.stack}.site.config'
-    target.write_text(render(_stack_outputs(args.stack), stack=args.stack, dragen_image_tag=args.dragen_image_tag))
+    target.write_text(render(stack_outputs.read(args.stack), stack=args.stack, dragen_image_tag=args.dragen_image_tag))
     print(f'wrote {target.relative_to(_INFRA.parent)}')
 
 

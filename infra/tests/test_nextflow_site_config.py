@@ -5,6 +5,7 @@ import pathlib
 
 import nextflow_site_config
 import pytest
+import references
 
 # Invented outputs, in the form the program exports them.
 OUTPUTS = {
@@ -44,7 +45,7 @@ def test_render_places_each_output() -> None:
         if value != OUTPUTS['dataBucket']:
             assert f"'{value}" in config, value
     assert f"container = '{OUTPUTS['imagePrefix']}/dragen:4.6.2'" in config
-    assert f"dragen_reference = '{OUTPUTS['dataBucket']}/{nextflow_site_config.DRAGEN_REFERENCE}'" in config
+    assert f"dragen_reference = '{OUTPUTS['dataBucket']}/{references.DRAGEN_REFERENCE}'" in config
 
 
 def test_render_rejects_a_missing_output() -> None:
