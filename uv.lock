@@ -503,6 +503,9 @@ all = [
     { name = "boto3" },
     { name = "google-cloud-storage" },
 ]
+gs = [
+    { name = "google-cloud-storage" },
+]
 
 [[package]]
 name = "colorama"
@@ -1796,14 +1799,14 @@ name = "rare-disease-benchmark-metamist"
 version = "0.1.0"
 source = { editable = "adapters/metamist" }
 dependencies = [
-    { name = "google-cloud-storage" },
+    { name = "cloudpathlib", extra = ["gs"] },
     { name = "metamist" },
     { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "google-cloud-storage", specifier = ">=3.17.1" },
+    { name = "cloudpathlib", extras = ["gs"], specifier = ">=0.26" },
     { name = "metamist", specifier = ">=7.14.3" },
     { name = "pydantic", specifier = ">=2.11" },
 ]
