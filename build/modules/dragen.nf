@@ -9,32 +9,37 @@ def minMemoryGb(task) {
 }
 
 // One member's mapping and calling: everything but the licence and what the caller does with the run. Shared by the run
-// itself and its metering preview, so that the preview prices exactly the command that runs.
-def germlineCommand(task, sample, sex, cram, cram_reference, ref_dir) {
+// itself and its metering preview, so that the preview prices exactly the command that runs. A target BED, when given,
+// restricts small variant calling and its coverage reports to its regions; without one, the whole genome is called.
+def germlineCommand(task, sample, sex, cram, cram_reference, ref_dir, target_bed) {
     // DRAGEN discards the CRAM's alignments and duplicate flags and maps the reads afresh, keeping their read groups;
     // --cram-reference decodes the CRAM, which was compressed against a different FASTA. The sex comes from the
     // pedigree: on a few megabases of reads DRAGEN's ploidy estimator has too little coverage to infer it.
-    return """\
-        dragen \\
-            --sw-mode \\
-            --api-key-file /tmp/dragen-api-key \\
-            --num-threads ${task.cpus} \\
-            --min-threads ${task.cpus} \\
-            --min-memory ${minMemoryGb(task)} \\
-            --ref-dir ${ref_dir} \\
-            --intermediate-results-dir /tmp/dragen \\
-            --output-directory ${sample} \\
-            --output-file-prefix ${sample} \\
-            --cram-input ${cram} \\
-            --cram-reference ${cram_reference} \\
-            --pair-by-name true \\
-            --sample-sex ${sex} \\
-            --enable-map-align true \\
-            --enable-map-align-output true \\
-            --output-format CRAM \\
-            --enable-duplicate-marking true \\
-            --enable-variant-caller true \\
-            --vc-emit-ref-confidence GVCF""".stripIndent()
+    def args = [
+        '--sw-mode',
+        '--api-key-file /tmp/dragen-api-key',
+        "--num-threads ${task.cpus}",
+        "--min-threads ${task.cpus}",
+        "--min-memory ${minMemoryGb(task)}",
+        "--ref-dir ${ref_dir}",
+        '--intermediate-results-dir /tmp/dragen',
+        "--output-directory ${sample}",
+        "--output-file-prefix ${sample}",
+        "--cram-input ${cram}",
+        "--cram-reference ${cram_reference}",
+        '--pair-by-name true',
+        "--sample-sex ${sex}",
+        '--enable-map-align true',
+        '--enable-map-align-output true',
+        '--output-format CRAM',
+        '--enable-duplicate-marking true',
+        '--enable-variant-caller true',
+        '--vc-emit-ref-confidence GVCF',
+    ]
+    if (target_bed) {
+        args = args + ["--vc-target-bed ${target_bed}"]
+    }
+    return (['dragen'] + args).join(' \\\n    ')
 }
 
 process DRAGEN_GERMLINE {
@@ -45,6 +50,7 @@ process DRAGEN_GERMLINE {
     tuple val(sample), val(sex), path(cram), path(crai)
     tuple path(cram_reference), path(cram_reference_fai)
     path ref_dir
+    path target_bed // an empty list for none
     val api_key_secret
 
     output:
@@ -56,7 +62,7 @@ process DRAGEN_GERMLINE {
     """
     mkdir -p ${sample} /tmp/dragen
     (umask 077 && gcp-secret ${api_key_secret} > /tmp/dragen-api-key)
-    ${germlineCommand(task, sample, sex, cram, cram_reference, ref_dir)}
+    ${germlineCommand(task, sample, sex, cram, cram_reference, ref_dir, target_bed)}
     """
 
     stub:
@@ -76,6 +82,7 @@ process DRAGEN_GERMLINE_METERING_PREVIEW {
     tuple val(sample), val(sex), path(cram), path(crai)
     tuple path(cram_reference), path(cram_reference_fai)
     path ref_dir
+    path target_bed // an empty list for none
     val api_key_secret
 
     output:
@@ -85,7 +92,7 @@ process DRAGEN_GERMLINE_METERING_PREVIEW {
     """
     mkdir -p ${sample} /tmp/dragen
     (umask 077 && gcp-secret ${api_key_secret} > /tmp/dragen-api-key)
-    ${germlineCommand(task, sample, sex, cram, cram_reference, ref_dir)} \
+    ${germlineCommand(task, sample, sex, cram, cram_reference, ref_dir, target_bed)} \
         --metering-preview 2>&1 | tee ${sample}.metering-preview.txt
     """
 

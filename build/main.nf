@@ -20,6 +20,8 @@ params {
     dragen_api_key_secret: String
     // Instead of analysing, ask Illumina how each member's DRAGEN run would be billed, at no charge.
     dragen_metering_preview: Boolean = false
+    // Pass the regions to DRAGEN as its target BED, restricting small variant calling to them.
+    dragen_target_regions: Boolean = false
 }
 
 workflow {
@@ -41,11 +43,14 @@ workflow {
         .map { m -> tuple(m.sample, m.sex) }
         .join(crams, failOnMismatch: true, failOnDuplicate: true)
 
+    target_bed = params.dragen_target_regions ? params.regions : []
+
     if (params.dragen_metering_preview) {
         previews = DRAGEN_GERMLINE_METERING_PREVIEW(
             members_to_call,
             cram_reference,
             params.dragen_reference,
+            target_bed,
             params.dragen_api_key_secret,
         )
         samples = channel.empty()
@@ -56,6 +61,7 @@ workflow {
             members_to_call,
             cram_reference,
             params.dragen_reference,
+            target_bed,
             params.dragen_api_key_secret,
         )
         ped = members

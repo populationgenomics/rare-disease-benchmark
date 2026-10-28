@@ -36,6 +36,10 @@ it: DRAGEN prints the application, the tier and the features that put the run th
 anything or charging. The reports land in `metering-preview/` of the output directory. Run it before a new kind of run
 costs anything.
 
+Adding `--dragen_target_regions true` passes the regions to DRAGEN as its target BED (`--vc-target-bed`), restricting
+small variant calling to them. Illumina then bills the run by the number of genes the regions touch rather than by
+coverage.
+
 `slice/` holds a 1000 Genomes trio and two regions of 2 Mb around the placed sites of the schema's test fixture, which
 is enough to exercise every step in minutes.
 
