@@ -63,22 +63,23 @@ workflow {
         family = channel.empty()
     }
     else {
-        called = DRAGEN_GERMLINE(
+        samples = DRAGEN_GERMLINE(
             members_to_call,
             cram_reference,
             params.dragen_reference,
             target_bed,
             params.dragen_api_key_secret,
-        )
+        ).map { sample, cram, crai, gvcf, tbi, all -> outputRecord(sample, [cram: cram, cram_index: crai, gvcf: gvcf, gvcf_index: tbi], all) }
         ped = members
             .map { m -> [params.background, m.sample, m.father ?: '0', m.mother ?: '0', m.sex == 'male' ? '1' : '2', '0'].join('\t') }
             .collectFile(name: "${params.background}.ped", newLine: true, sort: true)
-        gvcfs = called.gvcf
-            .toSortedList { a, b -> a[0] <=> b[0] }
-            .map { rows -> rows.collectMany { row -> [row[1], row[2]] } }
+        gvcfs = samples
+            .toSortedList { a, b -> a.id <=> b.id }
+            .map { records -> records.collectMany { r -> [r.gvcf, r.gvcf_index] } }
         previews = channel.empty()
-        samples = called.all
         family = DRAGEN_PEDIGREE(params.background, gvcfs, ped, params.dragen_reference, params.dragen_api_key_secret)
+            .combine(ped)
+            .map { vcf, tbi, all, pedigree -> outputRecord(params.background, [vcf: vcf, vcf_index: tbi, pedigree: pedigree], all) }
     }
 
     publish:
@@ -87,16 +88,32 @@ workflow {
     metering_previews = previews
 }
 
+// One folder per background and pipeline version, so a rerun with another version, or of another preparation pass,
+// sits beside the earlier ones. Each index lists its records with the paths their files were published to: what an
+// adapter for a sample registry reads.
 output {
     samples {
-        path 'samples'
+        path { r -> "backgrounds/${params.background}/${workflow.manifest.version}/samples/${r.id}/" }
+        index {
+            path "backgrounds/${params.background}/${workflow.manifest.version}/samples.json"
+        }
     }
     family {
-        path 'family'
+        path { _r -> "backgrounds/${params.background}/${workflow.manifest.version}/family/" }
+        index {
+            path "backgrounds/${params.background}/${workflow.manifest.version}/family.json"
+        }
     }
     metering_previews {
-        path 'metering-preview'
+        path "backgrounds/${params.background}/${workflow.manifest.version}/metering-preview"
     }
+}
+
+// A record of one target's outputs: its id, the files a consumer looks for by role, and every other file the step
+// wrote (metrics, logs), so that all of them are published.
+def outputRecord(id, named, all) {
+    def namedFiles = named.values() as Set
+    return [id: id] + named + [other: all.findAll { f -> !(f in namedFiles) }.sort { f -> f.name }]
 }
 
 def checkMember(row) {

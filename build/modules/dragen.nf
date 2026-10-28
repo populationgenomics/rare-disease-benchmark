@@ -24,7 +24,7 @@ def germlineCommand(task, sample, sex, cram, cram_reference, ref_dir, target_bed
         "--min-memory ${minMemoryGb(task)}",
         "--ref-dir ${ref_dir}",
         '--intermediate-results-dir /tmp/dragen',
-        "--output-directory ${sample}",
+        '--output-directory .',
         "--output-file-prefix ${sample}",
         "--cram-input ${cram}",
         "--cram-reference ${cram_reference}",
@@ -55,21 +55,20 @@ process DRAGEN_GERMLINE {
     val api_key_secret
 
     output:
-    tuple val(sample), path("${sample}/${sample}.hard-filtered.gvcf.gz"), path("${sample}/${sample}.hard-filtered.gvcf.gz.tbi"), emit: gvcf
-    tuple val(sample), path("${sample}/${sample}.cram"), path("${sample}/${sample}.cram.crai"), emit: cram
-    path "${sample}", emit: all
+    // The named files fail the task when missing; '*' holds everything DRAGEN wrote: metrics, logs, the usage record.
+    tuple val(sample), path("${sample}.cram"), path("${sample}.cram.crai"), path("${sample}.hard-filtered.gvcf.gz"), path("${sample}.hard-filtered.gvcf.gz.tbi"), path('*')
 
     script:
     """
-    mkdir -p ${sample} /tmp/dragen
+    mkdir -p /tmp/dragen
     (umask 077 && gcp-secret ${api_key_secret} > /tmp/dragen-api-key)
     ${germlineCommand(task, sample, sex, cram, cram_reference, ref_dir, target_bed)}
     """
 
     stub:
     """
-    mkdir -p ${sample}
-    touch ${sample}/${sample}.hard-filtered.gvcf.gz ${sample}/${sample}.hard-filtered.gvcf.gz.tbi ${sample}/${sample}.cram ${sample}/${sample}.cram.crai
+    touch ${sample}.cram ${sample}.cram.crai ${sample}.hard-filtered.gvcf.gz ${sample}.hard-filtered.gvcf.gz.tbi
+    touch ${sample}.mapping_metrics.csv dragen_run_stub.log
     """
 }
 
@@ -91,7 +90,7 @@ process DRAGEN_GERMLINE_METERING_PREVIEW {
 
     script:
     """
-    mkdir -p ${sample} /tmp/dragen
+    mkdir -p /tmp/dragen
     (umask 077 && gcp-secret ${api_key_secret} > /tmp/dragen-api-key)
     ${germlineCommand(task, sample, sex, cram, cram_reference, ref_dir, target_bed)} \
         --metering-preview 2>&1 | tee ${sample}.metering-preview.txt
@@ -115,13 +114,13 @@ process DRAGEN_PEDIGREE {
     val api_key_secret
 
     output:
-    path "${family}"
+    tuple path("${family}.hard-filtered.vcf.gz"), path("${family}.hard-filtered.vcf.gz.tbi"), path('*')
 
     script:
     // The caller's output depends on the order of its inputs, so the workflow passes the gVCFs sorted by sample.
     def variants = gvcfs.findAll { gvcf -> gvcf.name.endsWith('.gvcf.gz') }.collect { gvcf -> "--variant ${gvcf}" }.join(' ')
     """
-    mkdir -p ${family} /tmp/dragen
+    mkdir -p /tmp/dragen
     (umask 077 && gcp-secret ${api_key_secret} > /tmp/dragen-api-key)
     dragen \\
         --sw-mode \\
@@ -131,7 +130,7 @@ process DRAGEN_PEDIGREE {
         --min-memory ${minMemoryGb(task)} \\
         --ref-dir ${ref_dir} \\
         --intermediate-results-dir /tmp/dragen \\
-        --output-directory ${family} \\
+        --output-directory . \\
         --output-file-prefix ${family} \\
         --enable-joint-genotyping true \\
         --pedigree-file ${ped} \\
@@ -140,7 +139,6 @@ process DRAGEN_PEDIGREE {
 
     stub:
     """
-    mkdir -p ${family}
-    touch ${family}/${family}.hard-filtered.vcf.gz
+    touch ${family}.hard-filtered.vcf.gz ${family}.hard-filtered.vcf.gz.tbi ${family}.vc_metrics.csv dragen_run_stub.log
     """
 }

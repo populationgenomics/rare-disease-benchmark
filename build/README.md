@@ -59,6 +59,23 @@ coverage.
 `slice/` holds a 1000 Genomes trio and two regions of 2 Mb around the placed sites of the schema's test fixture, which
 is enough to exercise every step in minutes.
 
+## Outputs
+
+Everything a run publishes sits under `<output_dir>/backgrounds/<background>/<version>/`, where the version is the
+pipeline's (`manifest.version` in `nextflow.config`), so a run with another version sits beside the earlier ones:
+
+```
+samples/<sample>/   <sample>.cram (+ .crai), <sample>.hard-filtered.gvcf.gz (+ .tbi), DRAGEN's metrics and logs
+family/             <background>.hard-filtered.vcf.gz (+ .tbi), the PED file, DRAGEN's metrics and logs
+samples.json        one record per sample: id, cram, cram_index, gvcf, gvcf_index, other
+family.json         one record for the family: id, vcf, vcf_index, pedigree, other
+```
+
+The two JSON files are the pipeline's manifest: each record names a target and the paths its files were published to. A
+deployment that keeps a sample registry reads them to register the outputs; the pipeline itself knows no registry.
+Samples are named after the sample sheet's ids, inside the files too: the reads' read groups take the sheet's id, so the
+source's own sample names do not carry through.
+
 ## Memory
 
 DRAGEN Software Mode refuses to start with less than 120 GB of memory unless `--min-memory` lowers the gate, and its
