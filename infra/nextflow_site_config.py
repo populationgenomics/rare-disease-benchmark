@@ -20,7 +20,7 @@ _BUILD = _INFRA.parent / 'build'
 
 # Where the references sit in the data bucket; build/README.md says how to put them there.
 DRAGEN_REFERENCE = 'references/dragen/hg38-alt_masked.cnv.graph.hla.methyl_cg.rna-12-r6.0-1'
-CRAM_REFERENCE = 'references/1000genomes/GRCh38_full_analysis_set_plus_decoy_hla.fa'
+CRAM_REFERENCE = 'references/grch38/Homo_sapiens_assembly38.fasta'
 
 REQUIRED_OUTPUTS = (
     'project',

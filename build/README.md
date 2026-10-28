@@ -13,9 +13,10 @@ a run can stay on a laptop.
 The infrastructure is a Pulumi program in `infra/`; its README sets up a deployment. Once a stack is up and the
 references are in its data bucket:
 
-- the 1000 Genomes FASTA the CRAMs were compressed against
-  ([GRCh38_full_analysis_set_plus_decoy_hla.fa](https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/)),
-  with its `.fai`, under `references/1000genomes/`;
+- a FASTA with the sequences the 1000 Genomes CRAMs were compressed against, with its `.fai`, under
+  `references/grch38/`. Broad's `gs://gcp-public-data--broad-references/hg38/v0/Homo_sapiens_assembly38.fasta` has the
+  same 3,366 sequences as the CRAM headers (names, lengths and MD5s, in order) and copies over within GCS; its `.dict`
+  lists the MD5s to compare against;
 - Illumina's hg38 pangenome hash table, unpacked to
   `references/dragen/hg38-alt_masked.cnv.graph.hla.methyl_cg.rna-12-r6.0-1/`;
 - the DRAGEN image, built from `containers/dragen` with Illumina's Software Mode installer and pushed under the stack's
