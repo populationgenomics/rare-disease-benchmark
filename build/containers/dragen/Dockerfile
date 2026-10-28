@@ -11,9 +11,16 @@ FROM almalinux:9.8-20261002@sha256:9819dc675b67b595c2b59e42be7763fca1a8bb217fa59
 
 RUN dnf install -q -y jq && dnf clean all
 
+# The installer extracts into a directory named after itself inside the target; moving that one directory to a fixed
+# path keeps PATH independent of the version, and fails the build if a future installer creates more than one.
 RUN --mount=type=bind,from=installer,target=/installer \
-    sh /installer/dragen-softwaremode-*.el9.x86_64.bin --nox11 --noprogress --target /opt/dragen
+    sh /installer/dragen-softwaremode-*.el9.x86_64.bin --nox11 --noprogress --target /opt/dragen-installer \
+    && mv /opt/dragen-installer/dragen-softwaremode-* /opt/dragen \
+    && rmdir /opt/dragen-installer
 
 COPY gcp-secret /usr/local/bin/gcp-secret
 
 ENV PATH="/opt/dragen/bin:${PATH}"
+
+# An image whose binary does not start is never pushed.
+RUN dragen --version
