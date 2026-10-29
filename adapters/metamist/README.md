@@ -70,11 +70,11 @@ python -m rare_disease_benchmark.metamist register \
 requests a real run would send. Without it the command sends them with the user's Google credentials.
 
 For each sample it creates a `cram` and a `gvcf` analysis of the sample's sequencing group, and for the family one
-`joint-calling` analysis of all of them, each as `completed`. The `outputs` field holds the primary file with its index
-(and, for the joint VCF, the PED file) as secondary files. `meta` holds the keys CPG's pipelines write
-(`sequencing_type`, `stage`, `dataset`, `sequencing_group`, `size`) and three that trace the analysis to its run:
-`background`, `pipeline_version` and `published_dir`. Metrics and logs are not registered, since nothing looks them up
-as analyses and `published_dir` leads to them.
+`joint-calling` analysis of all of them, each as `completed`. The primary file's path goes in the `output` field, the
+one seqr's CRAM sync and cpg-flow read. `meta` holds the keys CPG's pipelines write (`sequencing_type`, `stage`,
+`dataset`, `sequencing_group`, `size`) and three that trace the analysis to its run: `background`, `pipeline_version`
+and `published_dir`. The companion files (indexes, and the joint VCF's PED file) are checked but not registered: indexes
+sit beside their files, and `published_dir` leads to the rest, as it does to the metrics and logs.
 
 A rerun on the same manifest creates nothing, because an analysis is found by its type and its primary file's path. A
 run of a newer version supersedes the older one: once its analyses exist, the command deactivates the analyses it
@@ -83,16 +83,12 @@ active analysis see only the new files. It leaves analyses of other backgrounds,
 alone. The module docstring of `register.py` covers the remaining cases: a rerun of an older version, a run interrupted
 midway, and a version rolled back by hand.
 
-Two consequences of how Metamist stores `outputs` matter to consumers. An analysis registered this way reads back with
-an empty `output` field and the path in `outputs.path`, so tools that read only `output` (seqr's CRAM sync, for one) see
-no file. And Metamist records a file's size and checksum, and marks it valid, only if its service account can read the
-bucket.
-||||||| parent of a9b9908 (adapters: add metamist ingest and sample-sheet commands)
+Metamist records a file's size and checksum, and marks it valid, only if its service account can read the bucket.
 
 ## Around a pipeline run
 
-A deployment puts a background family into its benchmark project once, then for each run writes the sheet and
-registers what the run produced:
+A deployment puts a background family into its benchmark project once, then for each run writes the sheet and registers
+what the run produced:
 
 1. Run `ingest --dry-run` from the project holding the source samples into the benchmark's test project, and read the
    plan.

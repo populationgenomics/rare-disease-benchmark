@@ -6,14 +6,15 @@ The manifest directory is the run's `<output_dir>/backgrounds/<background>/<vers
 sheet named each sample by its sequencing group id, so the manifest's sample ids must be active sequencing groups of
 the project. For each sample the command creates a `cram` and a `gvcf` analysis of its sequencing group, and for the
 family a `joint-calling` analysis of all of them. Each is created as `completed`, after checking that every file the
-manifest names exists, with the primary file and its companions in `outputs` (`{'basename': <path>,
-'secondary_files': {<role>: {'basename': <path>}}}`) and these keys in `meta`:
+manifest names exists, with the primary file's path as `output` and these keys in `meta`:
 
 - `sequencing_type` (the sequencing group's type), `stage` (the build process that wrote the file), `dataset` and,
   for a sample, `sequencing_group`, as CPG's pipelines record them; and `size`, the primary file's size in bytes;
 - `background`, `pipeline_version` and `published_dir` (the run's directory), which trace the analysis to its run.
 
-Metrics and logs stay unregistered: no consumer looks them up as analyses, and `published_dir` leads to them.
+The companion files (indexes, and the joint VCF's PED file) are checked but not registered: indexes sit beside their
+files, and `published_dir` leads to the rest. Metrics and logs stay unregistered too: no consumer looks them up as
+analyses.
 
 Rerunning is safe. An analysis is found by its type and its primary file's path, so a file already registered is not
 registered again; one registered with other sequencing groups, another status or another run is a conflict, and fails.
@@ -55,20 +56,12 @@ _COMPLETED = 'COMPLETED'  # as GraphQL spells the status
 
 
 class NewAnalysis(pydantic.BaseModel, frozen=True, extra='forbid'):
-    """An analysis to create: a primary file and its companions, for some sequencing groups."""
+    """An analysis to create: a primary file, for some sequencing groups."""
 
     type: str
     sequencing_groups: tuple[str, ...]
     output: str
-    secondary_files: dict[str, str]  # role -> path
     meta: dict[str, str | int]
-
-    def outputs(self) -> dict[str, Any]:
-        """The analysis's `outputs` field, as Metamist takes it."""
-        return {
-            'basename': self.output,
-            'secondary_files': {role: {'basename': path} for role, path in self.secondary_files.items()},
-        }
 
 
 class Analysis(pydantic.BaseModel, frozen=True, extra='forbid'):
@@ -172,13 +165,12 @@ def analyses(run: manifest.Manifest, state: Project, sizes: Mapping[str, int]) -
     result: list[NewAnalysis] = []
     for sample in run.samples:
         sample_type = state.sequencing_groups[sample.id]
-        for type_, output, index in ((CRAM, sample.cram, sample.cram_index), (GVCF, sample.gvcf, sample.gvcf_index)):
+        for type_, output in ((CRAM, sample.cram), (GVCF, sample.gvcf)):
             result.append(
                 NewAnalysis(
                     type=type_,
                     sequencing_groups=(sample.id,),
                     output=output,
-                    secondary_files={'index': index},
                     meta=meta(_SAMPLE_STAGE, sample_type, output) | {'sequencing_group': sample.id},
                 )
             )
@@ -188,7 +180,6 @@ def analyses(run: manifest.Manifest, state: Project, sizes: Mapping[str, int]) -
             type=JOINT_CALLING,
             sequencing_groups=tuple(ids),
             output=family.vcf,
-            secondary_files={'index': family.vcf_index, 'pedigree': family.pedigree},
             meta=meta(_FAMILY_STAGE, family_types[0], family.vcf),
         )
     )
@@ -353,7 +344,8 @@ def _request(analysis: NewAnalysis) -> metamist.models.Analysis:
     request = metamist.models.Analysis(
         type=analysis.type,
         status=metamist.models.AnalysisStatus('completed'),
-        outputs=analysis.outputs(),
+        # `output` rather than `outputs`: seqr's CRAM sync and cpg-flow read only `output`.
+        output=analysis.output,
         sequencing_group_ids=list(analysis.sequencing_groups),
         meta=dict(analysis.meta),
     )

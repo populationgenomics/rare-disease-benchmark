@@ -149,18 +149,16 @@ def test_registers_a_cram_and_a_gvcf_per_sample_and_the_family_joint_calling(
         assert new.meta['dataset'] == _DATASET
         assert new.meta['size'] == storage.sizes[new.output]
         assert all(new.meta['sequencing_type'] == _SEQUENCING_GROUPS[sg] for sg in new.sequencing_groups)
-        assert new.outputs()['basename'] == new.output
 
     for sample in run.samples:
         cram = [a for a in by_type['cram'] if a.sequencing_groups == (sample.id,)]
         gvcf = [a for a in by_type['gvcf'] if a.sequencing_groups == (sample.id,)]
-        assert [(a.output, a.secondary_files) for a in cram] == [(sample.cram, {'index': sample.cram_index})]
-        assert [(a.output, a.secondary_files) for a in gvcf] == [(sample.gvcf, {'index': sample.gvcf_index})]
+        assert [a.output for a in cram] == [sample.cram]
+        assert [a.output for a in gvcf] == [sample.gvcf]
         assert cram[0].meta['sequencing_group'] == gvcf[0].meta['sequencing_group'] == sample.id
     [joint] = by_type['joint-calling']
     assert set(joint.sequencing_groups) == {s.id for s in run.samples}
     assert joint.output == run.family.vcf
-    assert set(joint.secondary_files.values()) == {run.family.vcf_index, run.family.pedigree}
     assert 'sequencing_group' not in joint.meta
     assert len(plan.create) == len(server.active()) == 2 * len(run.samples) + 1
     assert not plan.deactivate
@@ -245,7 +243,8 @@ def test_dry_run_prints_the_requests_and_sends_none(
         json.loads(line.split(' ', 2)[2]) for line in lines if line.startswith(f'PUT /api/v1/analysis/{_PROJECT}/ ')
     ]
     patches = [line for line in lines if line.startswith('PATCH /api/v1/analysis/')]
-    assert [(p['type'], p['outputs']['basename']) for p in puts] == [(a.type, a.output) for a in plan.create]
+    assert [(p['type'], p['output']) for p in puts] == [(a.type, a.output) for a in plan.create]
+    assert all('outputs' not in p for p in puts)
     assert all(p['status'] == 'completed' and p['sequencing_group_ids'] for p in puts)
     assert len(patches) == len(plan.deactivate) == len(plan.create)
 
