@@ -1,0 +1,43 @@
+[
+  {
+    "id": "SG0001",
+    "cram": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/SG0001.cram",
+    "cram_index": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/SG0001.cram.crai",
+    "gvcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/SG0001.hard-filtered.gvcf.gz",
+    "gvcf_index": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/SG0001.hard-filtered.gvcf.gz.tbi",
+    "dragen_replay": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/SG0001-replay.json",
+    "sv_vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/SG0001.sv.vcf.gz",
+    "cnv_vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/SG0001.cnv.vcf.gz",
+    "cnv_counts": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/SG0001.tn.tsv.gz",
+    "other": [
+      "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/SG0001.mapping_metrics.csv",
+      "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0001/dragen_run_1.log"
+    ]
+  },
+  {
+    "id": "SG0002",
+    "cram": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0002/SG0002.cram",
+    "cram_index": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0002/SG0002.cram.crai",
+    "gvcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0002/SG0002.hard-filtered.gvcf.gz",
+    "gvcf_index": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0002/SG0002.hard-filtered.gvcf.gz.tbi",
+    "dragen_replay": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0002/SG0002-replay.json",
+    "sv_vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0002/SG0002.sv.vcf.gz",
+    "cnv_vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0002/SG0002.cnv.vcf.gz",
+    "cnv_counts": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0002/SG0002.tn.tsv.gz",
+    "other": [
+      "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0002/SG0002.mapping_metrics.csv"
+    ]
+  },
+  {
+    "id": "SG0003",
+    "cram": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0003/SG0003.cram",
+    "cram_index": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0003/SG0003.cram.crai",
+    "gvcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0003/SG0003.hard-filtered.gvcf.gz",
+    "gvcf_index": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0003/SG0003.hard-filtered.gvcf.gz.tbi",
+    "dragen_replay": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0003/SG0003-replay.json",
+    "sv_vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0003/SG0003.sv.vcf.gz",
+    "cnv_vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0003/SG0003.cnv.vcf.gz",
+    "cnv_counts": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/samples/SG0003/SG0003.tn.tsv.gz",
+    "other": []
+  }
+]
