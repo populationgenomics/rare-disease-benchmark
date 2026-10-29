@@ -1,9 +1,12 @@
 # build
 
-The Nextflow pipeline that prepares background families and, in later steps, builds cases into them. For now it prepares
-a background over a set of regions: it cuts each member's public CRAM down to the regions, has DRAGEN 4.6 in Software
-Mode map the reads afresh and call each member, and genotypes the family jointly in pedigree mode. Phasing, added
-variants and read editing follow.
+The Nextflow pipeline that prepares background families and, in later steps, builds cases into them. For now it does the
+first step of preparing a background: it names each member's sample after the sample sheet, has DRAGEN 4.6 in Software
+Mode map each member's whole genome afresh and run every caller, and calls the family jointly in pedigree mode. Phasing,
+added variants and the case build follow; [docs/build.md](../docs/build.md) maps the whole design onto the pipeline.
+
+Given `--regions`, a run prepares a slice instead: it cuts each CRAM down to the regions and calls small variants only.
+Slices are for tests, and have the shape of a case build's run over windows.
 
 ## Running on Google Cloud Batch
 
@@ -35,18 +38,19 @@ only uses when the launch asks for it. `deployments/cpg/` shows one deployment's
 cd build
 nextflow run main.nf -profile google -c <stack>.site.config -params-file <stack>.params.yaml \
     --background <name> \
-    --family slice/family.csv \
-    --regions slice/regions.bed
+    --family slice/family.csv
 ```
+
+Adding `--regions slice/regions.bed` makes it a slice.
 
 Adding `--dragen_metering_preview true` asks Illumina how each member's DRAGEN run would be billed instead of running
 it: DRAGEN prints the application, the tier and the features that put the run there, then exits without analysing
 anything or charging. The reports land in `metering-preview/` under the output directory. Run it before a new kind of
 run costs anything.
 
-Adding `--dragen_target_regions true` passes the regions to DRAGEN as its target BED (`--vc-target-bed`), restricting
-small variant calling to them. Illumina then bills the run by the number of genes the regions touch rather than by
-coverage.
+Adding `--dragen_target_regions true` to a slice passes its regions to DRAGEN as its target BED (`--vc-target-bed`),
+restricting small variant calling to them. Illumina then bills the run by the number of genes the regions touch rather
+than by coverage.
 
 `slice/` holds a 1000 Genomes trio and two regions of 2 Mb around the placed sites of the schema's test fixture, which
 is enough to exercise every step in minutes.
@@ -57,11 +61,19 @@ Everything a run publishes sits under `<output_dir>/backgrounds/<background>/<ve
 pipeline's (`manifest.version` in `nextflow.config`), so a run with another version sits beside the earlier ones:
 
 ```
-samples/<sample>/   <sample>.cram (+ .crai), <sample>.hard-filtered.gvcf.gz (+ .tbi), DRAGEN's metrics and logs
-family/             <background>.hard-filtered.vcf.gz (+ .tbi), the PED file, DRAGEN's metrics and logs
-samples.json        one record per sample: id, cram, cram_index, gvcf, gvcf_index, other
-family.json         one record for the family: id, vcf, vcf_index, pedigree, other
+samples/<sample>/   <sample>.cram (+ .crai), <sample>.hard-filtered.gvcf.gz (+ .tbi), every other caller's output,
+                    DRAGEN's settings, metrics and logs
+family/             <background>.hard-filtered.vcf.gz (+ .tbi), the PED file, the joint copy number, structural variant
+                    and UPD calls, DRAGEN's settings, metrics and logs
+samples.json        one record per sample: id, cram, cram_index, gvcf, gvcf_index, dragen_replay, other; for a whole
+                    genome also sv_vcf, cnv_vcf and cnv_counts
+family.json         one record for the family: id, vcf, vcf_index, pedigree, dragen_replay, other; for a whole genome
+                    also cnv_vcf, sv_vcf and, for a trio, upd_vcf
 ```
+
+`dragen_replay` is DRAGEN's record of every setting a run used, which a case build reuses so that its window runs score
+reads as the background's runs did. Files the manifest names are looked up once their DRAGEN step has finished, so a
+file missing under its expected name fails the run without discarding the step: `-resume` picks it up again.
 
 The two JSON files are the pipeline's manifest: each record names a target and the paths its files were published to. A
 deployment that keeps a sample registry reads them to register the outputs; the pipeline itself knows no registry.

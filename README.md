@@ -26,15 +26,16 @@ family, meaning the pedigree and each member's clinical presentation.
 
 ## Layout
 
-| Folder    | Contents                                                                                |
-| --------- | --------------------------------------------------------------------------------------- |
-| `schema/` | The shared types: the case record, case instances, and what a system receives.          |
-| `build/`  | The Nextflow pipeline that prepares backgrounds with DRAGEN and builds cases into them. |
-| `infra/`  | The Pulumi program for the cloud infrastructure the pipeline runs on.                   |
+| Folder         | Contents                                                                                |
+| -------------- | --------------------------------------------------------------------------------------- |
+| `schema/`      | The shared types: the case record, case instances, and what a system receives.          |
+| `build/`       | The Nextflow pipeline that prepares backgrounds with DRAGEN and builds cases into them. |
+| `infra/`       | The Pulumi program for the cloud infrastructure the pipeline runs on.                   |
+| `deployments/` | Each deployment's own configuration for running the pipeline, such as CPG's.            |
 
 Each top-level folder is its own package under the `rare_disease_benchmark` namespace and installs on its own.
 
-[docs/schema.md](docs/schema.md) explains the schema, with diagrams.
+[docs/schema.md](docs/schema.md) explains the schema and [docs/build.md](docs/build.md) the build, with diagrams.
 
 This repository holds code and configuration only. No case, background genome or withheld side of any release is
 committed, and the test fixtures are invented.

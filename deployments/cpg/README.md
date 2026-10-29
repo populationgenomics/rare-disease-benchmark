@@ -32,6 +32,8 @@ family: https://raw.githubusercontent.com/populationgenomics/rare-disease-benchm
 regions: https://raw.githubusercontent.com/populationgenomics/rare-disease-benchmark/<commit>/build/slice/regions.bed
 ```
 
+Without `regions`, the run prepares the trio's whole genomes with every DRAGEN caller: a background.
+
 Then launch at that commit:
 
 ```sh
