@@ -20,7 +20,7 @@ params {
     dragen_api_key_secret: String
     // The DRAGEN image, in the deployment's private registry.
     dragen_container: String
-    // Where the outputs are published; nextflow.config reads it, since a Seqera launch can only set it through params.
+    // Where the outputs are published; nextflow.config reads it, so a launch sets it without a config of its own.
     output_dir: String?
     // Instead of analysing, ask Illumina how each member's DRAGEN run would be billed, at no charge.
     dragen_metering_preview: Boolean = false

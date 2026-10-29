@@ -24,18 +24,10 @@ generate the deployment's params and site config with
 `uv run --group infra python infra/pipeline_config.py --stack <stack> --dragen-image-tag <tag>`. A run takes the
 deployment's params plus its own: the background's name, its family sheet and its regions.
 
-**From Seqera**, through the analysis-runner. Seqera supplies the executor, project, region, service account and work
-directory, and selects no profile, so a run takes a single params file holding both sets of params, with the family
-sheet and regions as `gs://` or `https://` paths:
-
-```sh
-analysis-runner seqera --dataset <dataset> --access-level test \
-    --repository https://github.com/populationgenomics/rare-disease-benchmark \
-    --main-script build/main.nf --revision <branch or commit> \
-    --params-file <run>.params.yaml
-```
-
-Access levels above `test` need the commit to be on `main`.
+**From Seqera.** Seqera supplies the executor, project, region, service account and work directory, and selects no
+profile, so a run takes a single params file holding both sets of params, with the family sheet and regions as `gs://`
+or `https://` paths. Launch `build/main.nf` as the main script, with Nextflow's v2 syntax parser, which Seqera Platform
+only uses when the launch asks for it. `deployments/cpg/` shows one deployment's launch.
 
 **From a workstation**, which also needs the site config:
 

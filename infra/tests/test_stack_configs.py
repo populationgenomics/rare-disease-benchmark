@@ -21,10 +21,6 @@ def _config(path: pathlib.Path) -> dict:
     return yaml.safe_load(path.read_text())
 
 
-def test_there_is_a_stack() -> None:
-    assert _STACKS, 'no Pulumi.<stack>.yaml committed'
-
-
 @pytest.mark.parametrize('path', _STACKS, ids=lambda path: path.name)
 def test_secrets_are_kms_encrypted(path: pathlib.Path) -> None:
     stack = _config(path)

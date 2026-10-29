@@ -2,7 +2,7 @@
 
 Cloud infrastructure for running the build pipeline (`build/`) on Google Cloud Batch: a Pulumi program in Python, one
 stack per deployment, each in its own GCP project. The same program serves every deployment; what differs lives in
-`Pulumi.<stack>.yaml`, which is committed, with its secrets encrypted by the deployment's Cloud KMS key.
+`Pulumi.<stack>.yaml`, which a deployment may commit here, with its secrets encrypted by its Cloud KMS key.
 
 ## What it creates
 
@@ -56,9 +56,8 @@ with the DRAGEN key.
 
 ## Deployments
 
-| Stack | Project                      | Region               |
-| ----- | ---------------------------- | -------------------- |
-| `cpg` | `cpg-rare-disease-benchmark` | australia-southeast1 |
+No stack is committed. A deployment on a platform that already provides these resources can skip this program and give
+the pipeline its params directly, as CPG's does (`deployments/cpg/`).
 
 ## Tests
 
