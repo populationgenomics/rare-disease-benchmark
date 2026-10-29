@@ -43,7 +43,7 @@ repos:
       - id: nextflow-lint
         name: nextflow lint
         language: docker_image
-        entry: -u root nextflow/nextflow:26.10.2@sha256:8faf5c1ca30ed1f50d3802d365f07cf328765eccabcb288c575b87adaf50915d nextflow lint -format build
+        entry: -u root nextflow/nextflow:26.04.7@sha256:08a3a53e8fd317b22711b6fbabb268678b91b023b39099da2b902261515f438e nextflow lint -format build
         files: ^build/.*\.(nf|config)$
         pass_filenames: false
 

@@ -51,7 +51,8 @@ process DRAGEN_GERMLINE {
     tuple val(sample), val(sex), path(cram), path(crai)
     tuple path(cram_reference), path(cram_reference_fai)
     path ref_dir
-    path target_bed // an empty list for none
+    // An empty list for none.
+    path target_bed
     val api_key_secret
 
     output:
@@ -82,7 +83,8 @@ process DRAGEN_GERMLINE_METERING_PREVIEW {
     tuple val(sample), val(sex), path(cram), path(crai)
     tuple path(cram_reference), path(cram_reference_fai)
     path ref_dir
-    path target_bed // an empty list for none
+    // An empty list for none.
+    path target_bed
     val api_key_secret
 
     output:
