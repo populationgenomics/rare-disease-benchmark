@@ -4,6 +4,10 @@
     "vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a.hard-filtered.vcf.gz",
     "vcf_index": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a.hard-filtered.vcf.gz.tbi",
     "pedigree": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a.ped",
+    "dragen_replay": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a-replay.json",
+    "cnv_vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a-cnv.cnv.vcf.gz",
+    "sv_vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a-sv.sv.vcf.gz",
+    "upd_vcf": "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a-upd.upd.vcf.gz",
     "other": [
       "gs://example-bucket/out/backgrounds/trio-a/0.1.0/family/trio-a.vc_metrics.csv"
     ]

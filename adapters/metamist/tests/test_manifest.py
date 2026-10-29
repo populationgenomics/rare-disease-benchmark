@@ -76,7 +76,28 @@ REJECTED: dict[str, tuple[Change, str]] = {
         'is not a file under',
     ),
     "a background other than the folder's": (lambda d: family(d).update(id='trio-b'), 'backgrounds/trio-b/'),
+    "some of a sample's whole-genome files": (lambda d: sample(d, 0).pop('cnv_counts'), 'not all of'),
+    "some of the family's whole-genome files": (lambda d: family(d).pop('sv_vcf'), 'not all of'),
+    'slice samples in a whole-genome run': (lambda d: [as_slice(r) for r in d['samples']], 'mixes'),
+    'UPD calls in a slice': (lambda d: [family(d).pop(k) for k in ('cnv_vcf', 'sv_vcf')], "must be a whole genome's"),
 }
+
+_WHOLE_GENOME_KEYS = ('sv_vcf', 'cnv_vcf', 'cnv_counts', 'upd_vcf')
+
+
+def as_slice(record: dict[str, Any]) -> None:
+    for key in _WHOLE_GENOME_KEYS:
+        record.pop(key, None)
+
+
+def test_a_slice_names_no_whole_genome_files() -> None:
+    data = fixture_data()
+    for record in (*data['samples'], *data['family']):
+        as_slice(record)
+    run = parse(data)
+    assert not run.family.whole_genome
+    assert not any(s.whole_genome for s in run.samples)
+    assert not any(p.endswith(('.sv.vcf.gz', '.cnv.vcf.gz', '.tn.tsv.gz', '.upd.vcf.gz')) for p in run.paths())
 
 
 @pytest.mark.parametrize(('change', 'message'), REJECTED.values(), ids=REJECTED.keys())
