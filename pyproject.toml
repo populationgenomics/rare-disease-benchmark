@@ -20,8 +20,10 @@ members = ["schema"]
 rare-disease-benchmark-schema = { workspace = true }
 
 [dependency-groups]
-test = ["pytest", "rare-disease-benchmark-schema"]
-lint = ["pre-commit", "ruff", "pyright", { include-group = "test" }]
+# infra: the Pulumi program in infra/ (not a package; Pulumi runs it from this environment).
+infra = ["pulumi", "pulumi-gcp", "pyyaml"]
+test = ["pytest", "rare-disease-benchmark-schema", { include-group = "infra" }]
+lint = ["pre-commit", "ruff", "pyright", "types-pyyaml", { include-group = "test" }]
 
 [tool.ruff]
 line-length = 120
@@ -65,7 +67,7 @@ ignore = [
 convention = "google"
 
 [tool.ruff.lint.isort]
-known-first-party = ["rare_disease_benchmark"]
+known-first-party = ["rare_disease_benchmark", "rare_disease_infra"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 20
@@ -79,14 +81,17 @@ max-locals = 25
 
 [tool.pyright]
 pythonVersion = "3.13"
-include = ["schema"]
+include = ["schema", "infra"]
+# The Pulumi program imports its package from infra/, and the tests their helpers from the test folders.
+extraPaths = ["infra", "infra/tests", "schema/tests"]
 typeCheckingMode = "standard"
 reportImplicitOverride = "error"
 
 [tool.pytest.ini_options]
-testpaths = ["schema/tests"]
-# Shared test helpers (schema/tests/edits.py) are imported by name.
-pythonpath = ["schema/tests"]
+testpaths = ["schema/tests", "infra/tests"]
+# Shared test helpers (schema/tests/edits.py, infra/tests/mocked_program.py) are imported by name, and the Pulumi
+# program's package from infra/.
+pythonpath = ["schema/tests", "infra/tests", "infra"]
 # importlib: test modules in different folders may share a basename. strict-markers: a misspelled marker is a
 # collection error rather than a warning, so it cannot silently deselect tests.
 addopts = ["--import-mode=importlib", "--strict-markers"]

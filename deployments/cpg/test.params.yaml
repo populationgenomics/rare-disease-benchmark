@@ -1,0 +1,7 @@
+# CPG's deployment params for runs at the test access level. A launch adds the run's own params (background, family,
+# regions) to a copy of this file; see README.md.
+cram_reference: gs://cpg-common-main/references/hg38/v0/Homo_sapiens_assembly38.fasta
+dragen_reference: gs://cpg-common-main/references/dragen/hg38-alt_masked.cnv.graph.hla.methyl_cg.rna-12-r6.0-1
+dragen_api_key_secret: projects/rd-benchmark-220215/secrets/dragen-api-key/versions/latest
+dragen_container: australia-southeast1-docker.pkg.dev/cpg-common/images-dev/dragen@sha256:b96473267b1d27cc98138b4bcd01f1ef085450c03f34cef9a2fe1e6b76c9ec17
+output_dir: gs://cpg-rd-benchmark-test

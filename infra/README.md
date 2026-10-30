@@ -1,0 +1,67 @@
+# infra
+
+Cloud infrastructure for running the build pipeline (`build/`) on Google Cloud Batch: a Pulumi program in Python, one
+stack per deployment, each in its own GCP project. The same program serves every deployment; what differs lives in
+`Pulumi.<stack>.yaml`, which a deployment may commit here, with its secrets encrypted by its Cloud KMS key.
+
+## What it creates
+
+| Module                           | What                                                                                                                                                                                                 |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rare_disease_infra/baseline.py` | The enabled APIs, and the private Artifact Registry repository the DRAGEN image is pushed to.                                                                                                        |
+| `rare_disease_infra/storage.py`  | The work bucket (Nextflow work directories, deleted after 30 days), the data bucket (references, prepared backgrounds, outputs) and the versioned vendor bucket (the DRAGEN installer). All private. |
+| `rare_disease_infra/network.py`  | A VPC without firewall rules, so nothing can reach the VMs, and its subnetwork. VMs reach out to Illumina's licence server.                                                                          |
+| `rare_disease_infra/secrets.py`  | The DRAGEN API key in Secret Manager, from encrypted stack config.                                                                                                                                   |
+| `rare_disease_infra/grants.py`   | Every IAM grant, as a named capability whose docstring says what the holder can do.                                                                                                                  |
+| `__main__.py`                    | Reads the stack config, composes the above, creates the task VMs' service account and exports what the Nextflow config needs.                                                                        |
+| `references.py`                  | Puts the pipeline's references into a stack's data bucket (`fetch`) and checks them against their published checksums (`verify`).                                                                    |
+| `stack_outputs.py`               | Reads a stack's outputs, for the two tools.                                                                                                                                                          |
+| `pipeline_config.py`             | Renders the build pipeline's params and workstation site config for a stack from its outputs.                                                                                                        |
+| `bootstrap/bootstrap.sh`         | One-time setup of what Pulumi itself needs: the state bucket and the KMS key.                                                                                                                        |
+
+The task VMs run as `pipeline-tasks@<project>`, which can report to Batch, write logs, pull images, use both buckets and
+read the DRAGEN key. The groups in `pipelineLaunchers` can start Batch jobs as that account, follow their logs, use the
+buckets and push images. Acting as the task account gives a launcher everything it can read, so launchers are trusted
+with the DRAGEN key.
+
+## A new deployment
+
+1. Run `PROJECT=<project> REGION=<region> bootstrap/bootstrap.sh` with Owner on the project.
+1. From `infra/`, after `uv sync --group infra` in the repository root:
+   ```sh
+   export PULUMI_BACKEND_URL=gs://<project>-pulumi-state
+   pulumi stack init <stack> --secrets-provider gcpkms://projects/<project>/locations/<region>/keyRings/pulumi/cryptoKeys/pulumi
+   pulumi config set --stack <stack> gcp:project <project>
+   pulumi config set --stack <stack> gcp:region <region>
+   pulumi config set --stack <stack> --path 'pipelineLaunchers[0]' group:<address>
+   pulumi config set --stack <stack> --secret dragenApiKey < <file holding the key>
+   pulumi up --stack <stack>
+   ```
+   `PULUMI_BACKEND_URL` selects the state bucket for these commands only; `pulumi login` would switch the backend for
+   every Pulumi project on the machine.
+1. Build the DRAGEN image (`build/containers/dragen/Dockerfile`) and push it under the `imagePrefix` output.
+1. Put the pipeline's references into the data bucket, and check them once the Batch job it submits has finished:
+   ```sh
+   uv run --group infra python infra/references.py --stack <stack> fetch
+   uv run --group infra python infra/references.py --stack <stack> verify
+   ```
+   `fetch` copies GRCh38 from Broad's public bucket within GCS, and streams Illumina's DRAGEN hash table into the bucket
+   from a Cloud Batch job, so neither passes through the machine it runs on. Running it again finishes an interrupted
+   fetch: files already in the bucket are skipped.
+1. Generate the pipeline's params (`build/<stack>.params.yaml`) and workstation site config
+   (`build/<stack>.site.config`), both ignored by git, from the stack's outputs:
+   `uv run --group infra python infra/pipeline_config.py --stack <stack> --dragen-image-tag <tag>`.
+
+`pipelineLaunchers` names groups only: the stack config is public, and the program rejects any other kind of member.
+
+## Deployments
+
+No stack is committed. A deployment on a platform that already provides these resources can skip this program and give
+the pipeline its params directly, as CPG's does (`deployments/cpg/`).
+
+## Tests
+
+`uv run pytest infra/tests` runs the program under Pulumi's mocks, with an invented config and no cloud access, and
+checks invariants of what it would create (and every committed `Pulumi.<stack>.yaml` against the program's rules on
+config): every IAM binding belongs to a capability in `grants.py`, no basic role or public member is granted, only the
+task account reads the DRAGEN key, the buckets are private and the network has no firewall rules.

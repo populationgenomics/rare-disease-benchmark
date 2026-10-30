@@ -1,0 +1,4 @@
+sample,sex,father,mother,cram,crai
+NA19238,female,,,https://ftp.sra.ebi.ac.uk/vol1/run/ERR323/ERR3239453/NA19238.final.cram,https://ftp.sra.ebi.ac.uk/vol1/run/ERR323/ERR3239453/NA19238.final.cram.crai
+NA19239,male,,,https://ftp.sra.ebi.ac.uk/vol1/run/ERR323/ERR3239454/NA19239.final.cram,https://ftp.sra.ebi.ac.uk/vol1/run/ERR323/ERR3239454/NA19239.final.cram.crai
+NA19240,female,NA19239,NA19238,https://ftp.sra.ebi.ac.uk/vol1/run/ERR398/ERR3989410/NA19240.final.cram,https://ftp.sra.ebi.ac.uk/vol1/run/ERR398/ERR3989410/NA19240.final.cram.crai
